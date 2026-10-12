@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio 05 · Scripts NSE y verificación de ejecución | Portafolio de ciberseguridad</title>
+<meta name="description" content="Laboratorio 05: uso de scripts NSE de Nmap sobre SSH, TLS y HTTP, con la comprobación de que un script sin salida no significa un script que no se ejecutó.">
+<script>
+(function(){try{var t=localStorage.getItem("tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Portafolio de <span>laboratorios</span></a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="../index.html#proyecto">Proyecto</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../index.html#metodologia">Metodología</a>
+      <a href="../index.html#recursos">Recursos</a>
+        <button class="theme-toggle" type="button" aria-label="Cambiar tema">☾</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Laboratorio 05 de 06 · Estado completado</p>
+      <h1>Scripts NSE y verificación de ejecución</h1>
+      <p class="lede">Nmap trae 612 scripts de enumeración. Este laboratorio usa cuatro de ellos contra el objetivo autorizado y resuelve la pregunta que casi siempre se salta, cómo saber que un script se ejecutó de verdad cuando la salida en pantalla está vacía.</p>
+    </div>
+  </div>
+
+  <div class="wrap section">
+
+    <nav class="toc" aria-label="Índice del informe">
+      <h2>Índice del informe</h2>
+      <ol>
+        <li><a href="#s1">Resumen para selección</a></li>
+        <li><a href="#s2">Objetivo técnico</a></li>
+        <li><a href="#s3">Entorno y alcance</a></li>
+        <li><a href="#s4">Conocimientos previos</a></li>
+        <li><a href="#s5">Procedimiento reproducible</a></li>
+        <li><a href="#s6">Comandos y opciones</a></li>
+        <li><a href="#s7">Resultados observados</a></li>
+        <li><a href="#s8">Evidencias vinculadas</a></li>
+        <li><a href="#s9">Interpretación técnica</a></li>
+        <li><a href="#s10">Implicación defensiva</a></li>
+        <li><a href="#s11">Errores y limitaciones</a></li>
+        <li><a href="#s12">Conclusión</a></li>
+        <li><a href="#s13">Preguntas de entrevista</a></li>
+        <li><a href="#s14">Referencias</a></li>
+      </ol>
+    </nav>
+
+<section id="s1">
+      <h2>1. Resumen para una persona de selección</h2>
+      <p>Los scripts de enumeración son la parte de Nmap que va más allá de abrir y cerrar puertos. Este laboratorio los usó contra los cuatro puertos abiertos y obtuvo información útil de los tres principales, algoritmos de intercambio de claves SSH, propiedades del certificado TLS y cabeceras del servidor HTTP.</p>
+      <p>La mitad más valiosa del trabajo está en el último script. <code>ftp-anon</code> se ejecutó contra el puerto 21 y <strong>no devolvió ninguna línea de salida</strong>. Antes de concluir nada se comprobaron tres cosas por separado, si el script corrió realmente, si la herramienta es capaz de escribir cuando hay hallazgo, y qué dice el servidor cuando se intenta el acceso anónimo con un cliente distinto. Las tres comprobaciones dieron la misma respuesta, y ese es el resultado del laboratorio.</p>
+      <div class="note">
+        <span class="tag">Naturaleza del trabajo</span>
+        <p>Laboratorio académico sobre una máquina virtual propia, ejecutado por acceso SSH. Todas las pruebas son de lectura contra <code>192.168.56.103</code>, la máquina que ejecuta el propio escáner.</p>
+      </div>
+    </section>
+
+<section id="s2">
+      <h2>2. Objetivo técnico</h2>
+      <p>Enumerar los servicios identificados en el Laboratorio 04 con scripts NSE y establecer un criterio reproducible para distinguir entre un script que no encontró nada y un script que no llegó a ejecutarse.</p>
+      <ul>
+        <li>Listar los algoritmos que declara el servidor SSH.</li>
+        <li>Leer las propiedades del certificado del puerto TLS.</li>
+        <li>Extraer título, cabeceras e identificador del servidor HTTP.</li>
+        <li>Comprobar acceso anónimo en FTP y validar el resultado con un método independiente.</li>
+      </ul>
+    </section>
+
+<section id="s3">
+      <h2>3. Entorno y alcance</h2>
+      <p>Misma línea base que los laboratorios anteriores. Kali Linux 2026.3 en VirtualBox, Nmap <code>7.99</code> con <strong>612 scripts instalados</strong>, objetivo autorizado <code>192.168.56.103</code>.</p>
+
+      <div class="pending">
+        <span class="tag">Alcance autorizado</span>
+        <p>Único objetivo <code>192.168.56.103</code>. Los scripts ejecutados pertenecen a las categorías <code>safe</code>, <code>discovery</code> y <code>default</code>, que no modifican el objetivo.</p>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Fuera de alcance</span>
+        <p>No se ejecutó ningún script de las categorías <code>exploit</code>, <code>dos</code> ni <code>intrusive</code>. No se realizó fuerza bruta contra el acceso anónimo ni contra ninguna credencial.</p>
+      </div>
+
+      <h3>3.1 Documentación de cada script</h3>
+      <p>Antes de usar un script conviene leer su ficha oficial. La documentación vive en <code>nmap.org/nsedoc/scripts/</code> y se consulta desde la propia herramienta.</p>
+      <div class="evidence">
+        <div class="evidence-head"><span>documentación oficial del script</span><span>--script-help</span></div>
+        <pre><code>$ nmap --script-help http-title
+http-title
+Categories: default discovery safe
+https://nmap.org/nsedoc/scripts/http-title.html
+  Shows the title of the default page of a web server.
+
+  The script will follow up to 5 HTTP redirects, using the default
+  rules in the http library.</code></pre>
+        <figcaption><strong>Figura 1.</strong> Ficha de <code>http-title</code>, con sus categorías y su dirección de documentación.</figcaption>
+      </div>
+    </section>
+
+<section id="s4">
+      <h2>4. Conocimientos previos</h2>
+      <ul>
+        <li><strong>Categorías.</strong> <code>safe</code> promete no alterar el objetivo. <code>discovery</code> recoge información. <code>default</code> son los que se ejecutan cuando no se especifica nada.</li>
+        <li><strong>Diferencia entre vacío y ausencia de salida.</strong> Un script puede no encontrar nada y escribir un mensaje explícito, o puede no encontrar nada y callarse. Las dos situaciones se distinguen mirando el XML.</li>
+        <li><strong>Elemento <code>&lt;script&gt;</code>.</strong> Solo aparece en el XML cuando el script deja resultado. Su ausencia es un dato, no un hueco.</li>
+        <li><strong>Escritura tardía.</strong> <code>--script-args-timeout</code> <strong>no existe</strong> en Nmap 7.99. La opción correcta para ajustar tiempos de un script es <code>--script-args</code> con la clave que declare cada script.</li>
+      </ul>
+    </section>
+
+<section id="s5">
+      <h2>5. Procedimiento reproducible</h2>
+      <ol>
+        <li>Consultar la ficha de cada script con <code>--script-help</code> antes de ejecutarlo.</li>
+        <li>Ejecutar <code>ssh2-enum-algos</code> contra el puerto 22.</li>
+        <li>Ejecutar <code>ssl-cert</code> contra el puerto 8443.</li>
+        <li>Ejecutar <code>http-title</code>, <code>http-headers</code> y <code>http-server-header</code> contra el puerto 8080.</li>
+        <li>Ejecutar <code>ftp-anon</code> contra el puerto 21 con <code>-d</code> para observar la traza interna.</li>
+        <li>Contrastar el resultado de <code>ftp-anon</code> con un control positivo y con un cliente FTP independiente.</li>
+      </ol>
+    </section>
+
+<section id="s6">
+      <h2>6. Comandos exactos y explicación de sus opciones</h2>
+
+      <div class="evidence">
+        <div class="evidence-head"><span>scripts ejecutados</span><span>Nmap 7.99</span></div>
+        <pre><code>$ nmap --script ssh2-enum-algos -p 22  \
+    -oA /home/mg/evidencias/lab05/ssh_algos 192.168.56.103
+
+$ nmap --script ssl-cert -p 8443 \
+    -oA /home/mg/evidencias/lab05/ssl_cert 192.168.56.103
+
+$ nmap --script http-title,http-headers,http-server-header -p 8080 \
+    -oA /home/mg/evidencias/lab05/http 192.168.56.103
+
+$ nmap --script ftp-anon -p 21 \
+    -oA /home/mg/evidencias/lab05/ftp_anon 192.168.56.103</code></pre>
+        <figcaption><strong>Opciones.</strong> <code>--script</code> acepta nombres separados por coma y también etiquetas de categoría precedidas de <code>=</code>. <code>-p</code> limita la ejecución a un puerto concreto, lo cual acelera mucho la prueba y evita tocar puertos de más. <code>-oA</code> guarda las tres salidas a la vez.</figcaption>
+      </div>
+
+      <div class="evidence">
+        <div class="evidence-head"><span>traza interna del script</span><span>modo debug</span></div>
+        <pre><code>$ nmap --script ftp-anon -p 21 -d 192.168.56.103 2&gt;&amp;1 \
+    | grep -iE 'ftp-anon|script|launch|Lib'
+NSE: Starting ftp-anon against 192.168.56.103:21.
+NSE: Finished ftp-anon against 192.168.56.103:21.</code></pre>
+        <figcaption><strong>Opciones.</strong> <code>-d</code> activa el detalle del motor NSE. Se filtró la salida con <code>grep</code> porque el debug completo es muy extenso. La pareja <em>Starting</em> y <em>Finished</em> confirma que el script entró y salió normalmente.</figcaption>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Corrección aplicada durante el laboratorio</span>
+        <p>La primera versión de este procedimiento usaba <code>--script-args-timeout</code>. Esa opción <strong>no existe en Nmap 7.99</strong> y la ejecución falló. Se corrigió el guion y se verificó de nuevo, con lo que <code>ftp-anon</code> sí produjo su traza interna. Dejar constancia de la corrección importa más que ocultarla.</p>
+      </div>
+    </section>
+
+<section id="s7">
+      <h2>7. Resultados observados</h2>
+
+      <h3>7.1 Algoritmos declarados por el servidor SSH</h3>
+      <p>El servidor anuncia diez algoritmos de intercambio de claves, cuatro de clave pública del servidor y seis de cifrado.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab05/e05_nse.typescript</span>
+          <span>script ssh2-enum-algos</span>
+        </div>
+        <pre><code>| ssh2-enum-algos:
+|   kex_algorithms: (10)
+|       mlkem768x25519-sha256
+|       sntrup761x25519-sha512
+|       curve25519-sha256
+|       ecdh-sha2-nistp256
+|       ecdh-sha2-nistp384
+|       ecdh-sha2-nistp521
+|   server_host_key_algorithms: (4)
+|       rsa-sha2-512
+|       rsa-sha2-256
+|       ecdsa-sha2-nistp256
+|       ssh-ed25519
+|   encryption_algorithms: (6)
+|       chacha20-poly1305@openssh.com
+|       aes128-gcm@openssh.com
+|       aes256-gcm@openssh.com
+|       aes128-ctr
+|       aes192-ctr
+|       aes256-ctr</code></pre>
+        <figcaption><strong>Figura 2.</strong> Algoritmos que declara el servidor SSH. Evidencia completa en <code>e05_nse.typescript</code>.</figcaption>
+      </figure>
+
+      <p>La presencia de <code>mlkem768x25519-sha256</code> y de <code>sntrup761x25519-sha512</code> indica que este OpenSSH está preparado para intercambios resistentes a computación cuántica, y que <strong>el algoritmo moderno se anuncia primero</strong>, de modo que la negociación lo elige cuando el cliente lo soporta. En la lista de cifrado no aparece ninguno de los algoritmos considerados débiles, no hay <code>cbc</code> ni <code>3des</code>.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab05-ssh.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab05-ssh.png" alt="Pantalla con los algoritmos SSH declarados">
+        <figcaption><strong>Captura 1.</strong> Listado completo de algoritmos de intercambio, de clave del servidor y de cifrado, con sus recuentos.</figcaption>
+      </figure>
+
+      <h3>7.2 Propiedades del certificado TLS</h3>
+      <p>El script <code>ssl-cert</code> lee el certificado que entrega el servidor y lo traduce a campos legibles, incluidos los resúmenes criptográficos.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab05/ssl_cert.nmap</span>
+          <span>script ssl-cert</span>
+        </div>
+        <pre><code>| ssl-cert: Subject: commonName=lab.magalena.local
+|           organizationName=Laboratorio academico local
+|           countryName=PA
+| Issuer: commonName=lab.magalena.local
+|         organizationName=Laboratorio academico local
+|         countryName=PA
+| Public Key type: rsa
+| Public Key bits: 2048
+| Signature Algorithm: sha256WithRSAEncryption
+| Not valid before: 2026-10-06T18:31:13
+| Not valid after:  2026-11-05T18:31:13
+| MD5:     42fd f0ef 2040 c09b 1d2d ee99 e7d5 3c29
+| SHA-1:   4fe4 de55 576d 2c2d fc96 b1ed 23a9 e16a
+|_SHA-256: a89d a637 4a97 b53d 1d94 33fc 23d5 e5c3</code></pre>
+        <figcaption><strong>Figura 3.</strong> Certificado leído por el script, con sujeto, emisor, clave y ventanas de validez.</figcaption>
+      </figure>
+
+      <p>Sujeto y emisor coinciden, lo cual confirma que es un certificado autofirmado. La clave es RSA de 2048 bits y la firma usa SHA-256, ambos aceptables. La ventana de validez es de un mes. El resumen SHA-256 es el que permitiría identificar este certificado concreto en futuras comprobaciones.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab05-cert.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab05-cert.png" alt="Pantalla con el certificado TLS leido por ssl-cert">
+        <figcaption><strong>Captura 2.</strong> Salida completa del script <code>ssl-cert</code>, incluidos los tres resúmenes criptográficos del certificado.</figcaption>
+      </figure>
+
+      <h3>7.3 Cabeceras del servidor HTTP</h3>
+      <p>Tres scripts sobre el mismo puerto, todos dentro de la categoría <code>safe</code>, realizan peticiones HTTP normales.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab05/http.nmap</span>
+          <span>scripts http-headers y http-server-header</span>
+        </div>
+        <pre><code>| http-headers:
+|   Server: SimpleHTTP/0.6 Python/3.13.14
+|   Date: Tue, 06 Oct 2026 19:26:48 GMT
+|   Content-type: text/html; charset=utf-8
+|   Content-Length: 386
+|
+|_  (Request type: HEAD)
+|_http-server-header: SimpleHTTP/0.6 Python/3.13.14</code></pre>
+        <figcaption><strong>Figura 4.</strong> Cabeceras extraídas del puerto 8080. Coinciden con lo obtenido por <code>curl</code> en el Laboratorio 04.</figcaption>
+      </figure>
+
+      <p>La coincidencia entre <code>curl</code> y el script NSE es el resultado relevante. Dos herramientas distintas, con implementaciones distintas, informan exactamente lo mismo. Esa redundancia es lo que convierte un dato en un hallazgo defendible.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab05-http.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab05-http.png" alt="Pantalla con las cabeceras HTTP extraidas por NSE">
+        <figcaption><strong>Captura 3.</strong> Salida de los tres scripts HTTP sobre el puerto 8080.</figcaption>
+      </figure>
+
+      <h3>7.4 El caso de <code>ftp-anon</code>, sin salida aparente</h3>
+      <p>Aquí está el núcleo del laboratorio. El script se ejecutó, la traza interna confirma que entró y salió, pero la salida final no contiene ninguna línea del script.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab05/e05c_ejecucion_script.typescript</span>
+          <span>ejecución y controles</span>
+        </div>
+        <pre><code>$ nmap --script ftp-anon -p 21 -d 192.168.56.103
+NSE: Starting ftp-anon against 192.168.56.103:21.
+NSE: Finished ftp-anon against 192.168.56.103:21.
+
+PORT   STATE SERVICE
+21/tcp open  ftp
+
+# control positivo, script banner sobre el mismo puerto
+  elementos &lt;script&gt; con banner:     &lt;script id="banner"
+  elementos &lt;script&gt; con ftp-anon:   (ninguno)</code></pre>
+        <figcaption><strong>Figura 5.</strong> Traza interna del script y control positivo con <code>banner</code>, que sí deja elemento <code>&lt;script&gt;</code>.</figcaption>
+      </figure>
+
+      <p>El control positivo resuelve la duda de fondo. El mismo puerto, la misma herramienta y el mismo formato de salida, pero con el script <code>banner</code> el elemento <code>&lt;script&gt;</code> <strong>sí aparece</strong>. La ausencia en el caso de <code>ftp-anon</code> no puede achacarse a un problema de formato ni a un fallo de escritura.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab05-ftpanon.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab05-ftpanon.png" alt="Pantalla con la ejecucion verificada del script ftp-anon">
+        <figcaption><strong>Captura 4.</strong> Traza de ejecución de <code>ftp-anon</code>, salida final y el control positivo con el script <code>banner</code>.</figcaption>
+      </figure>
+
+      <h3>7.5 Confirmación con un cliente independiente</h3>
+      <p>Para no depender solo de Nmap se probó el acceso anónimo con <code>curl</code>, que es un cliente FTP sin relación con el motor NSE.</p>
+      <div class="evidence">
+        <div class="evidence-head"><span>comprobación independiente</span><span>curl</span></div>
+        <pre><code>$ curl --user anonymous:anonymous ftp://192.168.56.103:21/
+  530 Access denied</code></pre>
+        <figcaption><strong>Figura 6.</strong> Respuesta del servidor ante el intento de acceso anónimo.</figcaption>
+      </div>
+      <p>El código <code>530</code> es la respuesta estándar de FTP para acceso denegado. <strong>El acceso anónimo está deshabilitado</strong>, que es exactamente lo que el script estaba buscando.</p>
+    </section>
+
+<section id="s8">
+      <h2>8. Evidencias vinculadas</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 1. Archivos de evidencia del Laboratorio 05.</caption>
+          <thead>
+            <tr><th>Archivo</th><th>Contenido</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>e05_nse.typescript</code></td><td>Transcripción de los scripts sobre SSH, TLS y HTTP</td></tr>
+            <tr><td><code>e05c_ejecucion_script.typescript</code></td><td>Ejecución de <code>ftp-anon</code> con <code>-d</code> y control positivo</td></tr>
+            <tr><td><code>ssh_algos.nmap</code> y anexos</td><td>Salida del script <code>ssh2-enum-algos</code></td></tr>
+            <tr><td><code>ssl_cert.nmap</code> y anexos</td><td>Salida del script <code>ssl-cert</code></td></tr>
+            <tr><td><code>http.nmap</code> y anexos</td><td>Salida de los tres scripts HTTP</td></tr>
+            <tr><td><code>banner_check.nmap</code></td><td>Control positivo usado para verificar la escritura del formato</td></tr>
+            <tr><td>Cuatro archivos PNG</td><td>Capturas de pantalla de cada bloque de resultados</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+<section id="s9">
+      <h2>9. Interpretación técnica</h2>
+
+      <p><strong>Evidencia.</strong> El servidor SSH anuncia <code>mlkem768x25519-sha256</code> como primer algoritmo de intercambio.</p>
+      <p><strong>Interpretación.</strong> El orden de la lista determina la preferencia de negociación. Un cliente moderno elegirá ese algoritmo, resistente a computación cuántica, sin ninguna configuración adicional por parte del administrador.</p>
+
+      <p><strong>Evidencia.</strong> <code>ftp-anon</code> tiene traza <em>Starting</em> y <em>Finished</em>, y no produce elemento <code>&lt;script&gt;</code>. El control con <code>banner</code> sobre el mismo puerto sí lo produce.</p>
+      <p><strong>Interpretación.</strong> La conclusión correcta es que <strong>el script se ejecutó y no encontró acceso anónimo</strong>. Un script NSE solo escribe en el XML cuando tiene algo que reportar. El silencio, acompañado de la traza de ejecución, es un resultado negativo válido.</p>
+
+      <p><strong>Evidencia.</strong> <code>curl --user anonymous:anonymous</code> devuelve <code>530 Access denied</code>.</p>
+      <p><strong>Interpretación.</strong> La comprobación independiente confirma el resultado del script con una herramienta que no comparte código con el motor NSE. Es la diferencia entre un resultado y un resultado defendible.</p>
+
+      <p><strong>Evidencia.</strong> La opción <code>--script-args-timeout</code> no existe en Nmap 7.99 y la primera ejecución falló.</p>
+      <p><strong>Interpretación.</strong> Un error de sintaxis en una opción que no existe se parece mucho a un script que no hace nada. Sin verificar la traza interna, habría sido posible escribir en el informe que <code>ftp-anon</code> no encontró acceso anónimo cuando en realidad el comando no había llegado a ejecutarse.</p>
+    </section>
+
+<section id="s10">
+      <h2>10. Implicación defensiva y recomendaciones</h2>
+      <ul>
+        <li><strong>Enumerar algoritmos es una revisión de configuración.</strong> Una lista que incluya <code>3des-cbc</code> o <code>aes128-cbc</code> es un hallazgo. En este equipo no aparece ninguno.</li>
+        <li><strong>El certificado se audita igual que el servicio.</strong> Sujeto, emisor, tamaño de clave, algoritmo de firma y ventanas de validez son campos que conviene citar, no resumir.</li>
+        <li><strong>La cabecera <code>Server</code> confirma el hallazgo del Laboratorio 04.</strong> Dos fuentes independientes con el mismo dato lo convierten en un hecho verificado.</li>
+        <li><strong>El acceso anónimo de FTP es una comprobación de configuración, no una explotación.</strong> Comprobarlo en un equipo propio es legítimo y útil, y el resultado negativo es tan informativo como el positivo.</li>
+        <li><strong>Todo script debe validarse con un control positivo</strong> cuando la ausencia de salida puede confundirse con un fallo.</li>
+      </ul>
+      <div class="note">
+        <span class="tag">Criterio de trabajo</span>
+        <p>Un resultado sin control es una observación. Un resultado con control es una evidencia. Este laboratorio está construido entero sobre esa diferencia.</p>
+      </div>
+    </section>
+
+<section id="s11">
+      <h2>11. Errores, limitaciones y puntos pendientes</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 2. Limitaciones y correcciones del Laboratorio 05.</caption>
+          <thead>
+            <tr><th>#</th><th>Incidencia</th><th>Impacto</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>L1</td>
+              <td>La opción <code>--script-args-timeout</code> no existe en Nmap 7.99</td>
+              <td>La primera ejecución de <code>ftp-anon</code> falló sin producir resultado útil</td>
+              <td>Corregido y verificado con control</td>
+            </tr>
+            <tr>
+              <td>L2</td>
+              <td>No se ejecutaron scripts de categorías ofensivas</td>
+              <td>El informe no cubre vulnerabilidades, solo enumeración</td>
+              <td>Decisión consciente y documentada</td>
+            </tr>
+            <tr>
+              <td>L3</td>
+              <td>La comprobación de acceso anónimo es única y no se repitió</td>
+              <td>Un resultado en un solo instante no describe el estado permanente del servicio</td>
+              <td>Pendiente si se retoma el laboratorio</td>
+            </tr>
+            <tr>
+              <td>L4</td>
+              <td>El servidor HTTP no devolvió título, solo cabeceras</td>
+              <td>El script <code>http-title</code> no aportó información adicional</td>
+              <td>Registrado como resultado vacío legítimo</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>La incidencia L1 es la más instructiva del portafolio. Documentar un error propio con su corrección y su control demuestra más criterio que presentar solo aciertos.</p>
+    </section>
+
+<section id="s12">
+      <h2>12. Conclusión</h2>
+      <p>Los cuatro scripts se ejecutaron sobre los puertos previstos. Tres produjeron información útil y el cuarto produjo un resultado negativo verificado.</p>
+      <p>El hallazgo técnico principal es que el servidor SSH de este equipo anuncia algoritmos resistentes a computación cuántica en primera posición, sin algoritmos débiles en la lista de cifrado. El hallazgo metodológico es más importante. <strong>Que un script no escriba nada no significa que no se haya ejecutado</strong>, y demostrarlo exige mirar la traza interna y montar un control positivo.</p>
+      <p>Ese criterio se aplica mucho más allá de Nmap. Toda comprobación automatizada admite la misma pregunta, cómo sé que la herramienta habría informado si hubiera encontrado algo.</p>
+    </section>
+
+<section id="s13">
+      <h2>13. Preguntas de entrevista sobre esta práctica</h2>
+      <ol>
+        <li><strong>¿Cómo demuestras que <code>ftp-anon</code> se ejecutó si no dio salida?</strong> Con <code>-d</code> aparecen las líneas <em>Starting</em> y <em>Finished</em>, y con un control positivo se comprueba que el formato sí escribe cuando hay hallazgo.</li>
+        <li><strong>¿Qué es un control positivo?</strong> Una prueba que se espera que funcione, usada para demostrar que el método es capaz de detectar lo que busca.</li>
+        <li><strong>¿Qué significa que el elemento <code>&lt;script&gt;</code> no aparezca en el XML?</strong> Que el script no reportó nada. No que no se haya ejecutado.</li>
+        <li><strong>¿Qué indica <code>mlkem768x25519-sha256</code> en la lista de algoritmos?</strong> Que el servidor soporta intercambio de claves resistente a computación cuántica y que lo prefiere por orden.</li>
+        <li><strong>¿Por qué el certificado autofirmado no es aquí un hallazgo?</strong> Porque es un laboratorio propio y el certificado se generó para él. En un servicio público sí sería relevante.</li>
+        <li><strong>¿Qué error se cometió y cómo se corrigió?</strong> Se usó una opción inexistente, <code>--script-args-timeout</code>. Se detectó al no aparecer la traza, se corrigió y se volvió a verificar con control.</li>
+      </ol>
+    </section>
+
+<section id="s14">
+      <h2>14. Referencias oficiales utilizadas</h2>
+      <ul>
+        <li>Documentación oficial de scripts NSE. <a href="https://nmap.org/nsedoc/">nmap.org/nsedoc</a></li>
+        <li>Ficha del script <code>ftp-anon</code>. <a href="https://nmap.org/nsedoc/scripts/ftp-anon.html">nmap.org/nsedoc/scripts/ftp-anon.html</a></li>
+        <li>Ficha del script <code>ssl-cert</code>. <a href="https://nmap.org/nsedoc/scripts/ssl-cert.html">nmap.org/nsedoc/scripts/ssl-cert.html</a></li>
+        <li>Ficha del script <code>ssh2-enum-algos</code>. <a href="https://nmap.org/nsedoc/scripts/ssh2-enum-algos.html">nmap.org/nsedoc/scripts/ssh2-enum-algos.html</a></li>
+        <li>Ficha del script <code>http-headers</code>. <a href="https://nmap.org/nsedoc/scripts/http-headers.html">nmap.org/nsedoc/scripts/http-headers.html</a></li>
+        <li>Guía del motor NSE. <a href="https://nmap.org/book/nse.html">nmap.org/book/nse.html</a></li>
+        <li>Documento 959 de FTP, respuestas de estado. <a href="https://www.rfc-editor.org/info/rfc959">rfc-editor.org/info/rfc959</a></li>
+        <li>Documentación de <code>curl</code>. <a href="https://curl.se/docs/manpage.html">curl.se/docs/manpage.html</a></li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Enlaces del pie">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../pdf/informe-general.pdf">Informe general (PDF)</a>
+      <a href="../pdf/ficha-proyecto.pdf">Ficha del proyecto (PDF)</a>
+    </nav>
+    <p>Portafolio académico de laboratorios de ciberseguridad. Los resultados corresponden a ejecuciones reales sobre una máquina virtual propia. Los pendientes están marcados como tales.</p>
+    <p><a href="mailto:magdalenagonzalezcorreo@gmail.com">magdalenagonzalezcorreo@gmail.com</a> · <a href="https://www.linkedin.com/in/magdalenagonzalezpanama/?locale=es">LinkedIn de Magdalena Sarit González Bustillo</a></p>
+  </div>
+</footer>
+
+<script src="../js/main.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+Script started on 2026-10-06 14:48:21-04:00 [COMMAND="bash ~/labenv/scripts/lab02_descubrimiento.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 02 - DESCUBRIMIENTO DE HOSTS
+ Fecha UTC-04:00 : 2026-10-06T14:48:21-04:00
+ Objetivo        : 192.168.56.103 (autorizado)
+ Nmap            : Nmap version 7.99 ( https://nmap.org )
+ Salidas         : /home/mg/evidencias/lab02/<nombre>.{nmap,xml,gnmap}  (-oA)
+==================================================================
+
+--- [2.0] Estado inicial del vecindario y de la interfaz ----------
+$ ip neigh
+[1;35m192.168.56.100 [0mdev [1;36meth2 [0mlladdr [1;33m08:00:27:5d:ad:d3 [0mSTALE 
+[1;35m192.168.56.1 [0mdev [1;36meth2 [0mlladdr [1;33m0a:00:27:00:00:03 [0mDELAY 
+[1;94mfe80::2 [0mdev [1;36meth0 [0mlladdr [1;33m52:54:00:12:35:00 [0mrouter STALE 
+[1;94mfd17:625c:f037:2::2 [0mdev [1;36meth0 [0mlladdr [1;33m52:54:00:12:35:00 [0mrouter STALE 
+$ ip -br addr
+[1;36mlo               [0mUNKNOWN        [1;35m127.0.0.1[0m/8 [1;94m::1[0m/128 
+[1;36meth0             [0m[1;32mUP             [0m[1;35m10.0.2.15[0m/24 [1;94mfd17:625c:f037:2:2295:20ce:875d:985f[0m/64 [1;94mfe80::a07e:e9ed:4216:f24e[0m/64 
+[1;36meth1             [0m[1;32mUP             [0m
+[1;36meth2             [0m[1;32mUP             [0m[1;35m192.168.56.103[0m/24 [1;94mfe80::f6c4:c800:d2ca:8dc3[0m/64 
+$ ip route get 192.168.56.103   (¿por dónde sale el paquete?)
+local [1;35m192.168.56.103 [0mdev [1;36mlo [0msrc [1;35m192.168.56.103 [0muid 1001 
+    cache <local> 
+
+--- [2.1] Ping ICMP clasico (referencia humana) -------------------
+$ ping -c 4 -W 2 192.168.56.103
+PING 192.168.56.103 (192.168.56.103) 56(84) bytes of data.
+64 bytes from 192.168.56.103: icmp_seq=1 ttl=64 time=0.294 ms
+64 bytes from 192.168.56.103: icmp_seq=2 ttl=64 time=0.086 ms
+64 bytes from 192.168.56.103: icmp_seq=3 ttl=64 time=0.081 ms
+64 bytes from 192.168.56.103: icmp_seq=4 ttl=64 time=0.255 ms
+
+--- 192.168.56.103 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3045ms
+rtt min/avg/max/mdev = 0.081/0.179/0.294/0.096 ms
+
+--- [2.2] Descubrimiento por eco ICMP (-PE) ------------------------
+$ nmap -sn -PE -oA /home/mg/evidencias/lab02/icmp_echo 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Stats: 0:00:00 elapsed; 0 hosts completed (0 up), 0 undergoing Host Discovery
+Parallel DNS resolution of 1 host. Timing: About 0.00% done
+Nmap scan report for 192.168.56.103
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 4.68 seconds
+
+--- [2.3] Descubrimiento por marca de tiempo ICMP (-PP) ------------
+$ nmap -sn -PP -oA /home/mg/evidencias/lab02/icmp_ts 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Nmap scan report for 192.168.56.103
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 0.52 seconds
+
+--- [2.4] Descubrimiento por SYN TCP sobre puertos comunes (-PS) ---
+$ nmap -sn -PS22,80,443,21 -oA /home/mg/evidencias/lab02/tcp_syn 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Nmap scan report for 192.168.56.103
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 4.51 seconds
+
+--- [2.5] Descubrimiento por ACK TCP (-PA) -------------------------
+$ nmap -sn -PA22,80,443 -oA /home/mg/evidencias/lab02/tcp_ack 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Nmap scan report for 192.168.56.103
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 4.57 seconds
+
+--- [2.6] Descubrimiento por UDP (-PU) -----------------------------
+$ nmap -sn -PU53,161,123 -oA /home/mg/evidencias/lab02/udp_ping 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Nmap scan report for 192.168.56.103
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 1.01 seconds
+
+--- [2.7] Descubrimiento por ARP (-PR) -----------------------------
+$ nmap -sn -PR -oA /home/mg/evidencias/lab02/arp_ping 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Nmap scan report for 192.168.56.103
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 0.54 seconds
+
+--- [2.8] Combinacion por defecto de nmap (varios mecanismos) ------
+$ nmap -sn -PS22,80,443 -PE -PP -oA /home/mg/evidencias/lab02/mixto 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Nmap scan report for 192.168.56.103
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 0.61 seconds
+
+--- [2.9] Mismo conjunto de pruebas sobre el bucle de trabajo ------
+$ nmap -sn -PE -PS22 -oA /home/mg/evidencias/lab02/loopback 127.0.0.1
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:48 -0400
+Nmap scan report for localhost (127.0.0.1)
+Host is up.
+Nmap done: 1 IP address (1 host up) scanned in 0.01 seconds
+
+--- [2.10] Resumen comparado de respuestas -------------------------
+| Mecanismo        | ¿Respuesta del objetivo? |
+|------------------|---------------------------|
+| icmp_echo | si |
+| icmp_ts | si |
+| tcp_syn | si |
+| tcp_ack | si |
+| udp_ping | si |
+| arp_ping | si |
+| mixto | si |
+
+### Ficheros generados (-oA):
+total 108
+drwxrwxr-x 2 mg mg 4096 Oct  6 14:48 .
+drwx------ 4 mg mg 4096 Oct  6 14:48 ..
+-rw-rw-r-- 1 mg mg  277 Oct  6 14:48 arp_ping.gnmap
+-rw-rw-r-- 1 mg mg  290 Oct  6 14:48 arp_ping.nmap
+-rw-rw-r-- 1 mg mg  973 Oct  6 14:48 arp_ping.xml
+-rw-rw-r-- 1 mg mg 4096 Oct  6 14:48 e02_descubrimiento.typescript
+-rw-rw-r-- 1 mg mg  278 Oct  6 14:48 icmp_echo.gnmap
+-rw-rw-r-- 1 mg mg  291 Oct  6 14:48 icmp_echo.nmap
+-rw-rw-r-- 1 mg mg 1066 Oct  6 14:48 icmp_echo.xml
+-rw-rw-r-- 1 mg mg  276 Oct  6 14:48 icmp_ts.gnmap
+-rw-rw-r-- 1 mg mg  289 Oct  6 14:48 icmp_ts.nmap
+-rw-rw-r-- 1 mg mg  971 Oct  6 14:48 icmp_ts.xml
+-rw-rw-r-- 1 mg mg  282 Oct  6 14:48 loopback.gnmap
+-rw-rw-r-- 1 mg mg  298 Oct  6 14:48 loopback.nmap
+-rw-rw-r-- 1 mg mg 1010 Oct  6 14:48 loopback.xml
+-rw-rw-r-- 1 mg mg  291 Oct  6 14:48 mixto.gnmap
+-rw-rw-r-- 1 mg mg  304 Oct  6 14:48 mixto.nmap
+-rw-rw-r-- 1 mg mg 1001 Oct  6 14:48 mixto.xml
+-rw-rw-r-- 1 mg mg  285 Oct  6 14:48 tcp_ack.gnmap
+-rw-rw-r-- 1 mg mg  298 Oct  6 14:48 tcp_ack.nmap
+-rw-rw-r-- 1 mg mg  989 Oct  6 14:48 tcp_ack.xml
+-rw-rw-r-- 1 mg mg  288 Oct  6 14:48 tcp_syn.gnmap
+-rw-rw-r-- 1 mg mg  301 Oct  6 14:48 tcp_syn.nmap
+-rw-rw-r-- 1 mg mg  995 Oct  6 14:48 tcp_syn.xml
+-rw-rw-r-- 1 mg mg  287 Oct  6 14:48 udp_ping.gnmap
+-rw-rw-r-- 1 mg mg  300 Oct  6 14:48 udp_ping.nmap
+-rw-rw-r-- 1 mg mg  993 Oct  6 14:48 udp_ping.xml
+
+==================================================================
+ LABORATORIO 02 - FIN  2026-10-06T14:48:41-04:00
+==================================================================
+
+Script done on 2026-10-06 14:48:41-04:00 [COMMAND_EXIT_CODE="0"]

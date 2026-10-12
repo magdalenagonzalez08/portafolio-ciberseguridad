@@ -1,0 +1,43 @@
+Script started on 2026-10-06 14:50:35-04:00 [COMMAND="bash ~/labenv/scripts/lab02_inspect.sh" <not executed on terminal>]
+===== icmp_echo =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PE -oA /home/mg/evidencias/lab02/icmp_echo 192.168.56.103" start="1791312504" startstr="Tue Oct  6 14:48:24 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312509" timestr="Tue Oct  6 14:48:29 2026" summary="Nmap done at Tue Oct  6 14:48:29 2026; 1 IP address (1 host up) scanned in 4.68 seconds" elapsed="4.68" exit="success"/><hosts up="1" down="0" total="1"/>
+
+===== icmp_ts =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PP -oA /home/mg/evidencias/lab02/icmp_ts 192.168.56.103" start="1791312509" startstr="Tue Oct  6 14:48:29 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312509" timestr="Tue Oct  6 14:48:29 2026" summary="Nmap done at Tue Oct  6 14:48:29 2026; 1 IP address (1 host up) scanned in 0.52 seconds" elapsed="0.52" exit="success"/><hosts up="1" down="0" total="1"/>
+
+===== tcp_syn =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PS22,80,443,21 -oA /home/mg/evidencias/lab02/tcp_syn 192.168.56.103" start="1791312509" startstr="Tue Oct  6 14:48:29 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312514" timestr="Tue Oct  6 14:48:34 2026" summary="Nmap done at Tue Oct  6 14:48:34 2026; 1 IP address (1 host up) scanned in 4.51 seconds" elapsed="4.51" exit="success"/><hosts up="1" down="0" total="1"/>
+
+===== tcp_ack =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PA22,80,443 -oA /home/mg/evidencias/lab02/tcp_ack 192.168.56.103" start="1791312514" startstr="Tue Oct  6 14:48:34 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312519" timestr="Tue Oct  6 14:48:39 2026" summary="Nmap done at Tue Oct  6 14:48:39 2026; 1 IP address (1 host up) scanned in 4.57 seconds" elapsed="4.57" exit="success"/><hosts up="1" down="0" total="1"/>
+
+===== udp_ping =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PU53,161,123 -oA /home/mg/evidencias/lab02/udp_ping 192.168.56.103" start="1791312519" startstr="Tue Oct  6 14:48:39 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312520" timestr="Tue Oct  6 14:48:40 2026" summary="Nmap done at Tue Oct  6 14:48:40 2026; 1 IP address (1 host up) scanned in 1.01 seconds" elapsed="1.01" exit="success"/><hosts up="1" down="0" total="1"/>
+
+===== arp_ping =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PR -oA /home/mg/evidencias/lab02/arp_ping 192.168.56.103" start="1791312520" startstr="Tue Oct  6 14:48:40 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312520" timestr="Tue Oct  6 14:48:40 2026" summary="Nmap done at Tue Oct  6 14:48:40 2026; 1 IP address (1 host up) scanned in 0.54 seconds" elapsed="0.54" exit="success"/><hosts up="1" down="0" total="1"/>
+
+===== mixto =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PS22,80,443 -PE -PP -oA /home/mg/evidencias/lab02/mixto 192.168.56.103" start="1791312520" startstr="Tue Oct  6 14:48:40 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312521" timestr="Tue Oct  6 14:48:41 2026" summary="Nmap done at Tue Oct  6 14:48:41 2026; 1 IP address (1 host up) scanned in 0.61 seconds" elapsed="0.61" exit="success"/><hosts up="1" down="0" total="1"/>
+
+===== loopback =====
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PE -PS22 -oA /home/mg/evidencias/lab02/loopback 127.0.0.1" start="1791312521" startstr="Tue Oct  6 14:48:41 2026" version="7.99" xmloutputversion="1.05">
+<runstats><finished time="1791312521" timestr="Tue Oct  6 14:48:41 2026" summary="Nmap done at Tue Oct  6 14:48:41 2026; 1 IP address (1 host up) scanned in 0.01 seconds" elapsed="0.01" exit="success"/><hosts up="1" down="0" total="1"/>
+
+
+Script done on 2026-10-06 14:50:37-04:00 [COMMAND_EXIT_CODE="0"]

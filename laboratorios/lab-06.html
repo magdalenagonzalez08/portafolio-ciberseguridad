@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio 06 · Mitigación del servicio HTTP | Portafolio de ciberseguridad</title>
+<meta name="description" content="Laboratorio 06: reducción de la superficie de exposición delimitando el servidor HTTP al interfaz de loopback, con comparación antes y después y propuestas de mejora pendientes.">
+<script>
+(function(){try{var t=localStorage.getItem("tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Portafolio de <span>laboratorios</span></a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="../index.html#proyecto">Proyecto</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../index.html#metodologia">Metodología</a>
+      <a href="../index.html#recursos">Recursos</a>
+        <button class="theme-toggle" type="button" aria-label="Cambiar tema">☾</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Laboratorio 06 de 06 · Estado completado</p>
+      <h1>Mitigación del servicio HTTP y verificación de alcance</h1>
+      <p class="lede">Un servidor de desarrollo que escucha en todas las interfaces es un servidor expuesto a la red. Este laboratorio delimita el servicio al interfaz de loopback y mide el efecto real con las mismas pruebas que detectaron el problema.</p>
+    </div>
+  </div>
+
+  <div class="wrap section">
+
+    <nav class="toc" aria-label="Índice del informe">
+      <h2>Índice del informe</h2>
+      <ol>
+        <li><a href="#s1">Resumen para selección</a></li>
+        <li><a href="#s2">Objetivo técnico</a></li>
+        <li><a href="#s3">Entorno y alcance</a></li>
+        <li><a href="#s4">Conocimientos previos</a></li>
+        <li><a href="#s5">Procedimiento reproducible</a></li>
+        <li><a href="#s6">Comandos y opciones</a></li>
+        <li><a href="#s7">Resultados observados</a></li>
+        <li><a href="#s8">Evidencias vinculadas</a></li>
+        <li><a href="#s9">Interpretación técnica</a></li>
+        <li><a href="#s10">Implicación defensiva</a></li>
+        <li><a href="#s11">Errores y limitaciones</a></li>
+        <li><a href="#s12">Conclusión</a></li>
+        <li><a href="#s13">Preguntas de entrevista</a></li>
+        <li><a href="#s14">Referencias</a></li>
+      </ol>
+    </nav>
+
+<section id="s1">
+      <h2>1. Resumen para una persona de selección</h2>
+      <p>El Laboratorio 04 identificó un servidor HTTP de Python escuchando en <code>0.0.0.0:8080</code>. Esa dirección significa todas las interfaces, de modo que cualquier equipo de la red podía pedir la página. Para un desarrollo local eso es más superficie de exposición de la necesaria.</p>
+      <p>La mitigación consistió en volver a arrancar el mismo servidor limitado a <code>127.0.0.1</code>, la interfaz de loopback. Después se repitieron las mismas comprobaciones remotas y la misma prueba local. El resultado es que la red ya no llega al servicio, el equipo local sí, y el resto de servicios del equipo siguen intactos. Todo queda documentado con una tabla comparativa y con la reversibilidad del cambio.</p>
+      <div class="note">
+        <span class="tag">Naturaleza del trabajo</span>
+        <p>Laboratorio académico sobre una máquina virtual propia. La única modificación aplicada es el parámetro de enlace del servidor HTTP de prueba, que se restaura en un paso documentado.</p>
+      </div>
+    </section>
+
+<section id="s2">
+      <h2>2. Objetivo técnico</h2>
+      <p>Reducir la superficie de exposición del servicio HTTP del laboratorio delimitándolo a loopback, y comprobar de forma medible que la exposición desaparece sin romper el uso previsto.</p>
+      <ul>
+        <li>Capturar el estado previo con las mismas pruebas usadas en los laboratorios 01 a 05.</li>
+        <li>Reconfigurar el enlace del servidor para escuchar solo en <code>127.0.0.1</code>.</li>
+        <li>Verificar desde la red y desde el propio equipo.</li>
+        <li>Documentar la reversibilidad y las mejoras que requieren autorización adicional.</li>
+      </ul>
+    </section>
+
+<section id="s3">
+      <h2>3. Entorno y alcance</h2>
+      <p>Misma línea base que los laboratorios anteriores. Kali Linux 2026.3 en VirtualBox, objetivo autorizado <code>192.168.56.103</code>, escáner ejecutado por acceso SSH desde el propio equipo.</p>
+
+      <div class="pending">
+        <span class="tag">Alcance autorizado</span>
+        <p>Único objetivo <code>192.168.56.103</code>. La modificación se limita al servidor HTTP de prueba del laboratorio y es reversible en un paso.</p>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Fuera de alcance</span>
+        <p>No se modificó el cortafuegos de la máquina. No se reinició el demonio SSH. No se alteró la configuración de <code>vsftpd</code>. No se apagó la máquina virtual.</p>
+      </div>
+
+      <h3>3.1 Servicios que permanecen sin tocar</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>servicios afectados y no afectados</span><span>alcance del cambio</span></div>
+        <pre><code>Servicio modificado:     HTTP (python http.server) en 8080
+Servicios sin cambios:   SSH en 22, FTP en 21, TLS en 8443
+Cortafuegos:             sin cambios
+Red de la máquina:       sin cambios</code></pre>
+        <figcaption><strong>Figura 1.</strong> Alcance real de la mitigación. Solo se tocó el enlace del servidor de prueba.</figcaption>
+      </div>
+    </section>
+
+<section id="s4">
+      <h2>4. Conocimientos previos</h2>
+      <ul>
+        <li><strong><code>0.0.0.0</code> contra <code>127.0.0.1</code>.</strong> La primera escucha en todas las interfaces, la segunda solo en loopback. Es la diferencia entre un servicio local y un servicio de red.</li>
+        <li><strong>Superficie de exposición.</strong> Conjunto de puntos por los que un atacante puede llegar a un sistema. Cerrar interfaces que no hacen falta es una de las formas más baratas de reducirla.</li>
+        <li><strong><code>filtered</code> contra <code>closed</code>.</strong> El primero significa que el paquete no obtuvo respuesta, el segundo que el sistema rechazó la conexión. La combinación de ambos estados es lo que se esperaba al limitar el servicio a loopback.</li>
+        <li><strong>Reversibilidad.</strong> Toda mitigación de laboratorio debe poder deshacerse en un paso documentado, o no es una mitigación sino un daño.</li>
+      </ul>
+    </section>
+
+<section id="s5">
+      <h2>5. Procedimiento reproducible</h2>
+      <ol>
+        <li>Capturar el estado previo, puertos y respuesta HTTP desde la red.</li>
+        <li>Detener el servidor HTTP de prueba.</li>
+        <li>Relanzarlo limitado a <code>127.0.0.1</code>.</li>
+        <li>Repetir el escaneo de puertos desde la perspectiva de red.</li>
+        <li>Comprobar la respuesta HTTP desde la red y desde el propio equipo.</li>
+        <li>Confirmar que los demás servicios siguen operativos.</li>
+        <li>Documentar la comparación y la reversibilidad.</li>
+      </ol>
+    </section>
+
+<section id="s6">
+      <h2>6. Comandos exactos y explicación de sus opciones</h2>
+
+      <div class="evidence">
+        <div class="evidence-head"><span>estado previo y estado final</span><span>escaneo completo de puertos</span></div>
+        <pre><code># antes, servidor escuchando en todas las interfaces
+$ nmap -sS -p 8080 --reason -oA /home/mg/evidencias/lab06/antes_sS 192.168.56.103
+$ nmap -sT -p 8080 --reason -oA /home/mg/evidencias/lab06/antes_sT 192.168.56.103
+$ curl -sI http://192.168.56.103:8080/ | head -n 4
+
+# después, servidor limitado a loopback
+$ nmap -sS -p 8080 --reason -oA /home/mg/evidencias/lab06/despues_sS 192.168.56.103
+$ nmap -sT -p 8080 --reason -oA /home/mg/evidencias/lab06/despues_sT 192.168.56.103
+$ curl -sI --max-time 5 http://192.168.56.103:8080/ | head -n 4
+
+# el servicio sigue vivo en loopback
+$ curl -sI http://127.0.0.1:8080/ | head -n 4</code></pre>
+        <figcaption><strong>Opciones.</strong> <code>--reason</code> explica por qué el puerto se clasificó como open, closed o filtered, y es la pieza clave de la comparación. <code>-sS</code> y <code>-sT</code> se usan los dos porque producen respuestas distintas ante un servicio que no escucha en la interfaz de red. <code>--max-time</code> limita la espera de <code>curl</code> cuando ya no hay respuesta.</figcaption>
+      </div>
+
+      <div class="evidence">
+        <div class="evidence-head"><span>relanzar el servidor</span><span>enlace a loopback</span></div>
+        <pre><code># se detiene la instancia anterior y se relanza limitada
+$ python3 -m http.server 8080 --bind 127.0.0.1
+
+# verificación del enlace activo
+$ ss -tlnp | grep 8080
+  LISTEN 0 5 127.0.0.1:8080 0.0.0.0:* users:(("python3",pid,fd))</code></pre>
+        <figcaption><strong>Opciones.</strong> El parámetro <code>--bind</code> del módulo <code>http.server</code> fija la dirección de enlace. <code>ss</code> confirma que la escucha ya no es en <code>0.0.0.0</code> sino en la dirección de loopback.</figcaption>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Nota de seguridad</span>
+        <p>No se usó <code>iptables</code> ni ningún cortafuegos. La mitigación se aplica en la propia aplicación, que es la forma menos invasiva de hacerlo en un laboratorio propio.</p>
+      </div>
+    </section>
+
+<section id="s7">
+      <h2>7. Resultados observados</h2>
+
+      <h3>7.1 Estado previo</h3>
+      <p>Antes del cambio, el puerto 8080 responde tanto al escaneo SYN como al de connect, y el servidor devuelve cabeceras HTTP con estado 200 desde la dirección de red.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab06/antes_sS.nmap</span>
+          <span>estado previo</span>
+        </div>
+        <pre><code>PORT     STATE SERVICE REASON
+8080/tcp open  http    syn-ack
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.13.14
+Content-type: text/html; charset=utf-8</code></pre>
+        <figcaption><strong>Figura 2.</strong> Puerto abierto y respuesta HTTP completa desde la red, estado previo.</figcaption>
+      </figure>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab06-antes.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab06-antes.png" alt="Pantalla con el estado previo, puerto 8080 abierto y respuesta HTTP 200">
+        <figcaption><strong>Captura 1.</strong> Estado antes de la mitigación. El servicio es alcanzable desde la red y responde con 200.</figcaption>
+      </figure>
+
+      <h3>7.2 Estado después de la mitigación</h3>
+      <p>Tras limitar el enlace a loopback, el mismo escaneo produce resultados distintos según el método, y la petición HTTP desde la red ya no obtiene respuesta.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab06/despues_sS.nmap</span>
+          <span>estado final</span>
+        </div>
+        <pre><code>PORT     STATE    SERVICE REASON
+8080/tcp filtered http    no-response
+
+# escaneo de connect sobre el mismo puerto
+PORT     STATE  SERVICE REASON
+8080/tcp closed http    conn-refused
+
+# desde el propio equipo el servicio sigue vivo
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.13.14</code></pre>
+        <figcaption><strong>Figura 3.</strong> Estado después de la mitigación. <code>-sS</code> informa filtered sin respuesta, <code>-sT</code> informa closed por rechazo, y el loopback sigue respondiendo 200.</figcaption>
+      </figure>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab06-despues.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab06-despues.png" alt="Pantalla con el estado final, puerto 8080 filtrado y loopback activo">
+        <figcaption><strong>Captura 2.</strong> Estado después de la mitigación. La red ya no llega al servicio y el uso local se mantiene.</figcaption>
+      </figure>
+
+      <h3>7.3 Comparación antes y después</h3>
+      <p>La tabla resume las mismas pruebas en los dos estados, que es la forma más legible de comunicar el efecto de un cambio.</p>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 1. Comparación de pruebas antes y después de la mitigación.</caption>
+          <thead>
+            <tr><th>Prueba</th><th>Antes</th><th>Después</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Enlace de escucha</td><td><code>0.0.0.0:8080</code></td><td><code>127.0.0.1:8080</code></td></tr>
+            <tr><td><code>nmap -sS</code></td><td>open, syn-ack</td><td>filtered, no-response</td></tr>
+            <tr><td><code>nmap -sT</code></td><td>open, syn-ack</td><td>closed, conn-refused</td></tr>
+            <tr><td><code>curl</code> desde la red</td><td>HTTP 200</td><td>sin respuesta</td></tr>
+            <tr><td><code>curl</code> desde loopback</td><td>HTTP 200</td><td>HTTP 200</td></tr>
+            <tr><td>Servidor SSH en 22</td><td>abierto</td><td>abierto</td></tr>
+            <tr><td>FTP en 21</td><td>abierto</td><td>abierto</td></tr>
+            <tr><td>TLS en 8443</td><td>abierto</td><td>abierto</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab06-comparativa.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab06-comparativa.png" alt="Pantalla con la comparativa antes y después de la mitigacion">
+        <figcaption><strong>Captura 3.</strong> Comparativa completa de las pruebas en los dos estados, con el servicio local todavía operativo.</figcaption>
+      </figure>
+
+      <h3>7.4 Confirmación de que los demás servicios no se afectaron</h3>
+      <p>Una mitigación que rompe algo más de lo previsto no es una mitigación. Se repitió un escaneo breve de los tres puertos principales.</p>
+      <div class="evidence">
+        <div class="evidence-head"><span>servicios vecinos</span><span>verificación posterior</span></div>
+        <pre><code>PORT   STATE SERVICE
+21/tcp open  ftp
+22/tcp open  ssh
+8443/tcp open https-alt</code></pre>
+        <figcaption><strong>Figura 4.</strong> Los tres servicios permanecen abiertos después del cambio en el servidor HTTP.</figcaption>
+      </div>
+    </section>
+
+<section id="s8">
+      <h2>8. Evidencias vinculadas</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 2. Archivos de evidencia del Laboratorio 06.</caption>
+          <thead>
+            <tr><th>Archivo</th><th>Contenido</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>antes_sS.nmap</code> y anexos</td><td>Escaneo SYN del estado previo</td></tr>
+            <tr><td><code>antes_sT.nmap</code> y anexos</td><td>Escaneo connect del estado previo</td></tr>
+            <tr><td><code>despues_sS.nmap</code> y anexos</td><td>Escaneo SYN del estado final</td></tr>
+            <tr><td><code>despues_sT.nmap</code> y anexos</td><td>Escaneo connect del estado final</td></tr>
+            <tr><td>Transcripción de sesión</td><td>Comandos y respuestas de los dos estados</td></tr>
+            <tr><td>Tres archivos PNG</td><td>Capturas de antes, después y comparativa</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+<section id="s9">
+      <h2>9. Interpretación técnica</h2>
+
+      <p><strong>Evidencia.</strong> Antes, <code>-sS</code> y <code>-sT</code> informan open con syn-ack y <code>curl</code> devuelve 200 desde la red.</p>
+      <p><strong>Interpretación.</strong> El servidor aceptaba conexiones en la dirección de red, y eso es lo que convertía un desarrollo local en un servicio expuesto.</p>
+
+      <p><strong>Evidencia.</strong> Después, <code>-sS</code> informa filtered con no-response y <code>-sT</code> informa closed con conn-refused.</p>
+      <p><strong>Interpretación.</strong> Los dos estados son coherentes con un servicio que ya no escucha en esa interfaz. El paquete SYN no encuentra puerto abierto, y el connect recibe rechazo del propio sistema. La red no llega a la aplicación.</p>
+
+      <p><strong>Evidencia.</strong> <code>curl</code> sobre <code>127.0.0.1:8080</code> sigue devolviendo 200 y <code>ss</code> muestra la escucha en la dirección de loopback.</p>
+      <p><strong>Interpretación.</strong> El uso previsto se conserva. La mitigación redujo exposición sin romper la función del servicio, que es el criterio de éxito de cualquier cambio de configuración.</p>
+
+      <p><strong>Evidencia.</strong> Los puertos 21, 22 y 8443 permanecen abiertos.</p>
+      <p><strong>Interpretación.</strong> El cambio fue quirúrgico. No hubo efectos colaterales sobre otros servicios, que es lo que separa una mitigación controlada de un apagado indiscriminado.</p>
+    </section>
+
+<section id="s10">
+      <h2>10. Implicación defensiva y recomendaciones</h2>
+      <ul>
+        <li><strong>Escuchar solo donde hace falta.</strong> Un servidor de desarrollo no necesita todas las interfaces. <code>--bind 127.0.0.1</code> es una línea que elimina la exposición accidental.</li>
+        <li><strong>Medir antes y después con las mismas pruebas.</strong> La comparación es lo que convierte un cambio de configuración en un resultado verificable.</li>
+        <li><strong>Usar <code>--reason</code>.</strong> Sin el motivo de clasificación, filtered y closed se leen igual y se pierde información sobre qué ocurrió realmente.</li>
+        <li><strong>Comprobar los servicios vecinos.</strong> Toda mitigación debe confirmar que no rompió nada más.</li>
+        <li><strong>Documentar la reversibilidad.</strong> Un cambio sin instrucciones de restauración no debería aplicarse ni en laboratorio.</li>
+      </ul>
+      <div class="note">
+        <span class="tag">Criterio de trabajo</span>
+        <p>La seguridad no es añadir controles, es elegir el control más pequeño que resuelve el problema y demostrar que funciona. Ese es el objeto de este laboratorio.</p>
+      </div>
+    </section>
+
+<section id="s11">
+      <h2>11. Errores, limitaciones y propuestas no ejecutadas</h2>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 3. Propuestas que quedan pendientes por requerir autorización.</caption>
+          <thead>
+            <tr><th>Código</th><th>Propuesta</th><th>Motivo de no ejecución</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>P-1</td>
+              <td>Revisar <code>PasswordAuthentication</code> del servidor SSH</td>
+              <td>Requiere privilegio de lectura sobre la configuración del demonio</td>
+            </tr>
+            <tr>
+              <td>P-2</td>
+              <td>Ejecutar <code>sudo sshd -T</code> para volcar la configuración efectiva</td>
+              <td>Requiere privilegio de root no autorizado en este laboratorio</td>
+            </tr>
+            <tr>
+              <td>P-3</td>
+              <td>Leer <code>anonymous_enable</code> desde <code>/etc/vsftpd.conf</code></td>
+              <td>Requiere privilegio de lectura sobre la configuración del servidor FTP</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Reversibilidad</span>
+        <p>Para deshacer la mitigación basta detener la instancia actual y relanzar el servidor con <code>python3 -m http.server 8080</code> sin la opción <code>--bind</code>, que vuelve a escuchar en todas las interfaces. Es el estado inicial documentado en el Laboratorio 04.</p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 4. Limitaciones del laboratorio.</caption>
+          <thead>
+            <tr><th>#</th><th>Limitación</th><th>Impacto</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>L1</td>
+              <td>No se aplicó control a nivel de cortafuegos</td>
+              <td>La mitigación depende de la aplicación y no protege si otro proceso abre el puerto</td>
+            </tr>
+            <tr>
+              <td>L2</td>
+              <td>La medición es de un único instante</td>
+              <td>Un estado puntual no describe el comportamiento bajo carga o tras reinicios</td>
+            </tr>
+            <tr>
+              <td>L3</td>
+              <td>Las propuestas P-1 a P-3 quedan sin ejecutar</td>
+              <td>Quedan controles pendientes de autorización para profundizar en SSH y FTP</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>La limitación L3 se deja escrita a propósito. Declarar qué no se hizo y por qué forma parte del mismo informe que declare qué se hizo.</p>
+    </section>
+
+<section id="s12">
+      <h2>12. Conclusión</h2>
+      <p>La mitigación se aplicó, se midió y se documentó. El servidor HTTP pasó de escuchar en todas las interfaces a escuchar solo en loopback, y las pruebas remotas pasaron de open con respuesta 200 a filtered y closed sin respuesta, mientras el uso local se mantuvo intacto.</p>
+      <p>El resultado demuestra el punto central de este portafolio. Reducir superficie de exposición no exige herramientas complejas, exige saber qué interfaz está escuchando, aplicar el cambio más pequeño y verificarlo con las mismas pruebas que detectaron el problema. Las tres tareas están reflejadas en las capturas y en la tabla comparativa.</p>
+    </section>
+
+<section id="s13">
+      <h2>13. Preguntas de entrevista sobre esta práctica</h2>
+      <ol>
+        <li><strong>¿Qué diferencia hay entre <code>0.0.0.0</code> y <code>127.0.0.1</code>?</strong> La primera escucha en todas las interfaces, la segunda solo en loopback, y solo la segunda queda fuera del alcance de la red.</li>
+        <li><strong>¿Por qué <code>-sS</code> dio filtered y <code>-sT</code> closed?</strong> Porque el SYN no encontró puerto abierto y el connect recibió rechazo del sistema. Son dos vistas del mismo hecho, un servicio que ya no escucha en esa interfaz.</li>
+        <li><strong>¿Cómo demuestras que no rompiste los demás servicios?</strong> Repitiendo un escaneo breve de los puertos principales después del cambio y confirmando que siguen abiertos.</li>
+        <li><strong>¿Qué es la reversibilidad y por qué la documentas?</strong> Es la instrucción exacta para volver al estado anterior. Sin ella, un cambio de configuración no es controlado.</li>
+        <li><strong>¿Por qué no usaste <code>iptables</code>?</strong> Porque la aplicación ya permite limitar el enlace. Un control en la aplicación es más pequeño y más fácil de revertir que una regla de cortafuegos.</li>
+        <li><strong>¿Qué quedó pendiente y por qué?</strong> Tres revisiones de configuración de SSH y FTP que requieren privilegios no autorizados en este laboratorio, documentadas como P-1 a P-3.</li>
+      </ol>
+    </section>
+
+<section id="s14">
+      <h2>14. Referencias oficiales utilizadas</h2>
+      <ul>
+        <li>Documentación de <code>http.server</code> de Python. <a href="https://docs.python.org/3/library/http.server.html">docs.python.org/3/library/http.server.html</a></li>
+        <li>Guía de referencia de Nmap, opciones de detección. <a href="https://nmap.org/book/man-briefoptions.html">nmap.org/book/man-briefoptions.html</a></li>
+        <li>Explicación de estados de puertos de Nmap. <a href="https://nmap.org/book/man-port-specification.html">nmap.org/book/man-port-specification.html</a></li>
+        <li>Documentación de <code>ss</code> de iproute2. <a href="https://man7.org/linux/man-pages/man8/ss.8.html">man7.org/linux/man-pages/man8/ss.8.html</a></li>
+        <li>Documentación de <code>curl</code>. <a href="https://curl.se/docs/manpage.html">curl.se/docs/manpage.html</a></li>
+        <li>Direcciones de enlace IPv4 reservadas. <a href="https://www.rfc-editor.org/info/rfc1122">rfc-editor.org/info/rfc1122</a></li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Enlaces del pie">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../pdf/informe-general.pdf">Informe general (PDF)</a>
+      <a href="../pdf/ficha-proyecto.pdf">Ficha del proyecto (PDF)</a>
+    </nav>
+    <p>Portafolio académico de laboratorios de ciberseguridad. Los resultados corresponden a ejecuciones reales sobre una máquina virtual propia. Los pendientes están marcados como tales.</p>
+    <p><a href="mailto:magdalenagonzalezcorreo@gmail.com">magdalenagonzalezcorreo@gmail.com</a> · <a href="https://www.linkedin.com/in/magdalenagonzalezpanama/?locale=es">LinkedIn de Magdalena Sarit González Bustillo</a></p>
+  </div>
+</footer>
+
+<script src="../js/main.js" defer></script>
+</body>
+</html>

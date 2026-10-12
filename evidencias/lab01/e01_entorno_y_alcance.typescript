@@ -1,0 +1,192 @@
+Script started on 2026-10-06 14:34:20-04:00 [COMMAND="bash ~/labenv/scripts/lab01_entorno.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 01 - ENTORNO Y ALCANCE
+ Comienzo: 2026-10-06T14:34:20-04:00
+==================================================================
+
+--- [1.1] FECHA, HORA Y ZONA HORARIA --------------------------------
+$ date -Is
+2026-10-06T14:34:20-04:00
+$ timedatectl show -p Timezone -p NTPSynchronized
+Timezone=America/New_York
+NTPSynchronized=no
+$ cat /etc/timezone
+cat: /etc/timezone: No such file or directory
+(archivo /etc/timezone no existe)
+
+--- [1.2] IDENTIDAD Y HOST -----------------------------------------
+$ whoami
+mg
+$ hostname
+magdalena
+$ id
+uid=1001(mg) gid=1001(mg) groups=1001(mg),0(root),4(adm),20(dialout),21(fax),24(cdrom),25(floppy),26(tape),27(sudo),29(audio),30(dip),44(video),46(plugdev),100(users),101(netdev),103(scanner),125(lpadmin),990(sambashare)
+$ hostnamectl | head -8
+ Static hostname: magdalena
+       Icon name: computer-vm
+         Chassis: vm 💽
+      Machine ID: aa8b2369c8374f788c337132b3a3fa02
+         Boot ID: afacdd5cb40c4b5995aae25239ae5300
+  Virtualization: oracle
+Operating System: Kali GNU/Linux Rolling
+          Kernel: Linux 7.1.5+kali-amd64
+
+--- [1.3] SISTEMA OPERATIVO ----------------------------------------
+$ cat /etc/os-release
+PRETTY_NAME="Kali GNU/Linux Rolling"
+NAME="Kali GNU/Linux"
+VERSION_ID="2026.3"
+VERSION="2026.3"
+VERSION_CODENAME=kali-rolling
+ID=kali
+ID_LIKE=debian
+HOME_URL="https://www.kali.org/"
+SUPPORT_URL="https://forums.kali.org/"
+BUG_REPORT_URL="https://bugs.kali.org/"
+ANSI_COLOR="1;31"
+$ uname -a
+Linux magdalena 7.1.5+kali-amd64 #1 SMP PREEMPT_DYNAMIC Kali 7.1.5-1kali1 (2026-07-29) x86_64 GNU/Linux
+
+--- [1.4] HIPERVISOR (confirmado, NO deducido por la IP) -----------
+$ systemd-detect-virt
+oracle
+$ lsmod | grep -E "vboxguest|vboxsf"
+vboxsf                 49152  1
+vboxguest              57344  7 vboxsf
+
+--- [1.5] INTERFACES DE RED ----------------------------------------
+$ ip -brief addr
+[1;36mlo               [0mUNKNOWN        [1;35m127.0.0.1[0m/8 [1;94m::1[0m/128 
+[1;36meth0             [0m[1;32mUP             [0m[1;35m10.0.2.15[0m/24 [1;94mfd17:625c:f037:2:2295:20ce:875d:985f[0m/64 [1;94mfe80::a07e:e9ed:4216:f24e[0m/64 
+[1;36meth1             [0m[1;32mUP             [0m
+[1;36meth2             [0m[1;32mUP             [0m[1;35m192.168.56.103[0m/24 [1;94mfe80::f6c4:c800:d2ca:8dc3[0m/64 
+$ ip -o -4 addr show
+1: lo    inet [1;35m127.0.0.1[0m/8 scope host lo\       valid_lft forever preferred_lft forever
+2: eth0    inet [1;35m10.0.2.15[0m/24 brd [1;35m10.0.2.255 [0mscope global dynamic noprefixroute eth0\       valid_lft 83666sec preferred_lft 83666sec
+4: eth2    inet [1;35m192.168.56.103[0m/24 brd [1;35m192.168.56.255 [0mscope global dynamic noprefixroute eth2\       valid_lft 565sec preferred_lft 565sec
+$ ip -o link show  (direcciones MAC para cruzar con el hipervisor)
+1: [1;36mlo: [0m<LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/loopback [1;33m00:00:00:00:00:00[0m brd [1;33m00:00:00:00:00:00[0m
+2: [1;36meth0: [0m<BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state [1;32mUP [0mmode DEFAULT group default qlen 1000\    link/ether [1;33m08:00:27:dd:07:d7[0m brd [1;33mff:ff:ff:ff:ff:ff[0m
+3: [1;36meth1: [0m<BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state [1;32mUP [0mmode DEFAULT group default qlen 1000\    link/ether [1;33m08:00:27:b0:b5:77[0m brd [1;33mff:ff:ff:ff:ff:ff[0m
+4: [1;36meth2: [0m<BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state [1;32mUP [0mmode DEFAULT group default qlen 1000\    link/ether [1;33m08:00:27:24:4b:cf[0m brd [1;33mff:ff:ff:ff:ff:ff[0m
+$ ip -brief link
+[1;36mlo               [0mUNKNOWN        [1;33m00:00:00:00:00:00 [0m<LOOPBACK,UP,LOWER_UP> 
+[1;36meth0             [0m[1;32mUP             [0m[1;33m08:00:27:dd:07:d7 [0m<BROADCAST,MULTICAST,UP,LOWER_UP> 
+[1;36meth1             [0m[1;32mUP             [0m[1;33m08:00:27:b0:b5:77 [0m<BROADCAST,MULTICAST,UP,LOWER_UP> 
+[1;36meth2             [0m[1;32mUP             [0m[1;33m08:00:27:24:4b:cf [0m<BROADCAST,MULTICAST,UP,LOWER_UP> 
+
+--- [1.6] TABLA DE RUTAS -------------------------------------------
+$ ip route
+default via [1;35m10.0.2.2 [0mdev [1;36meth0 [0mproto dhcp src [1;35m10.0.2.15 [0mmetric 100 
+[1;35m10.0.2.0/24 [0mdev [1;36meth0 [0mproto kernel scope link src [1;35m10.0.2.15 [0mmetric 100 
+[1;35m192.168.56.0/24 [0mdev [1;36meth2 [0mproto kernel scope link src [1;35m192.168.56.103 [0mmetric 102 
+$ ip -6 route | head
+fd17:625c:f037:2::/64 dev eth0 proto ra metric 100 pref medium
+fe80::/64 dev eth0 proto kernel metric 1024 pref medium
+fe80::/64 dev eth2 proto kernel metric 1024 pref medium
+default via fe80::2 dev eth0 proto ra metric 100 pref medium
+$ ip route get 192.168.56.103
+local [1;35m192.168.56.103 [0mdev [1;36mlo [0msrc [1;35m192.168.56.103 [0muid 1001 
+    cache <local> 
+$ ip route get 127.0.0.1
+local [1;35m127.0.0.1 [0mdev [1;36mlo [0msrc [1;35m127.0.0.1 [0muid 1001 
+    cache <local> 
+
+--- [1.7] ALCANCE AUTORIZADO ---------------------------------------
+Objetivo autorizado UNICO .......: 192.168.56.103 (eth2, esta maquina)
+Bucle de trabajo ...............: 127.0.0.1 / ::1
+FUERA de alcance (no se prueba) : 192.168.56.1 (anfitrion Windows),
+                                  10.0.2.2 (pasarela NAT),
+                                  192.168.56.0/24 (resto de la subred),
+                                  10.0.2.0/24 y cualquier red externa.
+Acciones prohibidas ............: denegacion de servicio, fuerza bruta,
+                                  explotacion, cambios en firewall/red.
+
+--- [1.8] HERRAMIENTAS Y VERSIONES ---------------------------------
+$ nmap --version
+Nmap version 7.99 ( https://nmap.org )
+Platform: x86_64-pc-linux-gnu
+Compiled with: liblua-5.4.8 openssl-3.6.3 libssh2-1.11.1 libz-1.3.1 libpcre2-10.46 libpcap-1.10.6 nmap-libdnet-1.18.0 ipv6
+Compiled without:
+Available nsock engines: epoll poll select
+$ cat /usr/bin/nmap  (wrapper de privilegios)
+#!/usr/bin/env sh
+
+set -e
+
+if [ "$(id -u)" -eq 0 ] || [ "$1" = "--resume" ]; then
+  exec /usr/lib/nmap/nmap "$@"
+else
+  exec /usr/lib/nmap/nmap --privileged "$@"
+fi
+$ getcap -v /usr/lib/nmap/nmap  (capacidades del binario real)
+/usr/lib/nmap/nmap cap_net_bind_service,cap_net_admin,cap_net_raw=eip
+$ python3 --version
+Python 3.13.14
+$ curl --version | head -1
+curl 8.21.0 (x86_64-pc-linux-gnu) libcurl/8.21.0 OpenSSL/3.6.3 zlib/1.3.2 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.8 libpsl/0.23.3 libssh2/1.11.1 nghttp2/1.70.0 ngtcp2/1.24.0 nghttp3/1.17.0 mit-krb5/1.22.1 OpenLDAP/2.6.14
+$ openssl version
+OpenSSL 3.6.3 9 Jun 2026 (Library: OpenSSL 3.6.3 9 Jun 2026)
+$ ssh -V
+OpenSSH_10.4p1 Debian-4, OpenSSL 3.6.3 9 Jun 2026
+$ dpkg -l nmap vsftpd openssh-server nginx
+ii  nginx                                            1.30.0-2                                  amd64        small, powerful, scalable web/proxy server
+ii  nmap                                             7.99+dfsg-1kali1                          amd64        The Network Mapper
+ii  openssh-server                                   1:10.4p1-4                                amd64        secure shell (SSH) server, for secure access from remote machines
+ii  python3                                          3.13.9-3+b1                               amd64        interactive high-level object-oriented language (default python3 version)
+ii  vsftpd                                           3.0.5-0.5                                 amd64        lightweight, efficient FTP server written for security
+
+--- [1.9] SERVICIOS ESCUCHANDO EN EL EQUIPO ------------------------
+$ ss -tln  (sin -p: ver procesos requiere privilegios)
+State  Recv-Q Send-Q Local Address:Port Peer Address:Port
+LISTEN 0      5            0.0.0.0:8080      0.0.0.0:*
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*
+LISTEN 0      128             [::]:22           [::]:*
+LISTEN 0      32                 *:21              *:*
+LISTEN 0      4096               *:8443            *:*
+
+$ ps -eo pid,user,comm | grep -E "sshd|vsftpd|python3|openssl|nginx"
+    873 root     vsftpd
+    874 root     sshd
+  23848 mg       python3
+  23863 mg       openssl
+  25354 root     sshd-session
+  25369 mg       sshd-session
+
+$ lsof -nP -iTCP -sTCP:LISTEN  (solo procesos del usuario actual)
+COMMAND   PID USER FD   TYPE DEVICE SIZE/OFF NODE NAME
+python3 23848   mg 3u  IPv4  71031      0t0  TCP *:8080 (LISTEN)
+openssl 23863   mg 3u  IPv6  67384      0t0  TCP *:8443 (LISTEN)
+NOTA: lsof sin privilegios no ve los procesos de otros usuarios;
+      por eso vsftpd/sshd se identificaron con ps y con systemctl.
+$ systemctl is-active ssh vsftpd
+active
+active
+
+--- [1.10] COMPROBACIONES DE CONECTIVIDAD (solo dentro del alcance) -
+$ ping -c 3 -W 2 127.0.0.1
+--- 127.0.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2043ms
+rtt min/avg/max/mdev = 0.067/0.594/1.644/0.742 ms
+$ ping -c 3 -W 2 192.168.56.103
+
+--- 192.168.56.103 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2080ms
+rtt min/avg/max/mdev = 0.071/3.353/9.495/4.346 ms
+
+NO se prueban 192.168.56.1 ni 10.0.2.2 ni ninguna otra direccion:
+no forman parte del alcance autorizado.
+
+--- [1.11] ESTADO DEL ACCESO DE GESTION (SSH) -----------------------
+$ ss -tln | grep ":22 "
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*
+LISTEN 0      128             [::]:22           [::]:*
+$ sshd: configuracion efectiva activa
+(no legible sin privilegios: se documenta como pendiente de validacion)
+
+==================================================================
+ LABORATORIO 01 - FIN
+ Fin: 2026-10-06T14:34:26-04:00
+==================================================================
+
+Script done on 2026-10-06 14:34:26-04:00 [COMMAND_EXIT_CODE="0"]

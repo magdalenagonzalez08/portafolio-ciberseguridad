@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:14:52 2026 as: /usr/lib/nmap/nmap --privileged -O --reason -p 1-100 -oA /home/mg/evidencias/lab04/os_loopback 127.0.0.1
+Host: 127.0.0.1 (localhost)	Status: Up
+Host: 127.0.0.1 (localhost)	Ports: 21/open/tcp//ftp///, 22/open/tcp//ssh///	Ignored State: closed (98)	Seq Index: 251	IP ID Seq: All zeros
+# Nmap done at Tue Oct  6 15:15:05 2026 -- 1 IP address (1 host up) scanned in 13.30 seconds

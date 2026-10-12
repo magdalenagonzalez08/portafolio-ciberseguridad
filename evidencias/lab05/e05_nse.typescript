@@ -1,0 +1,307 @@
+Script started on 2026-10-06 15:26:23-04:00 [COMMAND="bash ~/labenv/scripts/lab05_nse.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 05 - ENUMERACION NSE SELECCIONADA
+ Fecha: 2026-10-06T15:26:24-04:00
+ Objetivo autorizado: 192.168.56.103
+ Nmap: Nmap version 7.99 ( https://nmap.org )
+==================================================================
+
+==========================================================
+ 5.1  banner  (categoria: discovery)  -> puertos 21 y 22
+      Objetivo obtener el texto que el propio servicio manda
+      al conectarse, sin interpretarlo.
+==========================================================
+
+################ DOCUMENTACION OFICIAL DEL SCRIPT ################
+$ nmap --script-help banner
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+
+banner
+Categories: discovery safe
+https://nmap.org/nsedoc/scripts/banner.html
+  A simple banner grabber which connects to an open TCP port and prints out anything sent by the listening service within five seconds.
+
+  The banner will be truncated to fit into a single line, but an extra line may be printed for every
+  increase in the level of verbosity requested on the command line.
+#################################################################
+
+$ nmap --script banner -p 21,22 --script-args-timeout 5 -oA /home/mg/evidencias/lab05/banner 192.168.56.103
+/usr/lib/nmap/nmap: unrecognized option '--script-args-timeout'
+See the output of nmap -h for a summary of options.
+
+==========================================================
+ 5.2  ftp-anon  (categorias: default, auth, safe)
+      Comprueba si el servidor acepta login anonimo.
+      IMPORTANTE: realiza UN intento de autenticacion con las
+      credenciales bien conocidas anonymous/anonymous. No es
+      fuerza bruta ni prueba ninguna otra combinacion.
+==========================================================
+
+################ DOCUMENTACION OFICIAL DEL SCRIPT ################
+$ nmap --script-help ftp-anon
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+
+ftp-anon
+Categories: default auth safe
+https://nmap.org/nsedoc/scripts/ftp-anon.html
+  Checks if an FTP server allows anonymous logins.
+
+  If anonymous is allowed, gets a directory listing of the root directory
+  and highlights writeable files.
+#################################################################
+
+$ nmap --script ftp-anon -p 21 -oA /home/mg/evidencias/lab05/ftp_anon 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+Stats: 0:00:00 elapsed; 0 hosts completed (0 up), 0 undergoing Host Discovery
+Parallel DNS resolution of 1 host. Timing: About 0.00% done
+Nmap scan report for 192.168.56.103
+Host is up (0.00013s latency).
+
+PORT   STATE SERVICE
+21/tcp open  ftp
+
+Nmap done: 1 IP address (1 host up) scanned in 8.78 seconds
+
+==========================================================
+ 5.3  ssh2-enum-algos  (categoria: safe)
+      Lista los algoritmos que el servidor SSH declara en el
+      intercambio de version. Solo lectura de la negociacion.
+==========================================================
+
+################ DOCUMENTACION OFICIAL DEL SCRIPT ################
+$ nmap --script-help ssh2-enum-algos
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+
+ssh2-enum-algos
+Categories: safe discovery
+https://nmap.org/nsedoc/scripts/ssh2-enum-algos.html
+  Reports the number of algorithms (for encryption, compression, etc.) that
+  the target SSH2 server offers. If verbosity is set, the offered algorithms
+  are each listed by type.
+
+  If the "client to server" and "server to client" algorithm lists are identical
+  (order specifies preference) then the list is shown only once under a combined
+  type.
+#################################################################
+
+$ nmap --script ssh2-enum-algos -p 22 -oA /home/mg/evidencias/lab05/ssh_algos 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+Nmap scan report for 192.168.56.103
+Host is up (0.000096s latency).
+
+PORT   STATE SERVICE
+22/tcp open  ssh
+| ssh2-enum-algos: 
+|   kex_algorithms: (10)
+|       mlkem768x25519-sha256
+|       sntrup761x25519-sha512
+|       sntrup761x25519-sha512@openssh.com
+|       curve25519-sha256
+|       curve25519-sha256@libssh.org
+|       ecdh-sha2-nistp256
+|       ecdh-sha2-nistp384
+|       ecdh-sha2-nistp521
+|       ext-info-s
+|       kex-strict-s-v00@openssh.com
+|   server_host_key_algorithms: (4)
+|       rsa-sha2-512
+|       rsa-sha2-256
+|       ecdsa-sha2-nistp256
+|       ssh-ed25519
+|   encryption_algorithms: (6)
+|       chacha20-poly1305@openssh.com
+|       aes128-gcm@openssh.com
+|       aes256-gcm@openssh.com
+|       aes128-ctr
+|       aes192-ctr
+|       aes256-ctr
+|   mac_algorithms: (10)
+|       umac-64-etm@openssh.com
+|       umac-128-etm@openssh.com
+|       hmac-sha2-256-etm@openssh.com
+|       hmac-sha2-512-etm@openssh.com
+|       hmac-sha1-etm@openssh.com
+|       umac-64@openssh.com
+|       umac-128@openssh.com
+|       hmac-sha2-256
+|       hmac-sha2-512
+|       hmac-sha1
+|   compression_algorithms: (2)
+|       none
+|_      zlib@openssh.com
+
+Nmap done: 1 IP address (1 host up) scanned in 2.14 seconds
+
+==========================================================
+ 5.4  ssl-cert  (categoria: safe)
+      Lee el certificado X.509 que el servidor presenta.
+      Solo lectura del intercambio TLS, no ataca el cifrado.
+==========================================================
+
+################ DOCUMENTACION OFICIAL DEL SCRIPT ################
+$ nmap --script-help ssl-cert
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+
+ssl-cert
+Categories: default safe discovery
+https://nmap.org/nsedoc/scripts/ssl-cert.html
+  Retrieves a server's SSL certificate. The amount of information printed about
+  the certificate depends on the verbosity level. With no extra verbosity, the
+  script prints the validity period and the commonName, organizationName,
+  stateOrProvinceName, and countryName of the subject. When present, it also
+  outputs all the subject alternative names.
+
+  <code>
+  443/tcp open  https
+  | ssl-cert: Subject: commonName=www.paypal.com/organizationName=PayPal, Inc.
+  /stateOrProvinceName=California/countryName=US
+  | Subject Alternative Name: DNS:www.paypal.com, DNS:fastlane.paypal.com,
+  DNS:secure.paypal.com, DNS:www-st.paypal.com, DNS:connect.paypal.com,
+  ...
+  DNS:es.paypal-qrc.com, DNS:www.fastlane.paypal.com
+  | Not valid before: 2024-02-08T00:00:00
+  |_Not valid after:  2025-02-08T23:59:59
+  </code>
+
+  With <code>-v</code> it adds the issuer name and fingerprints.
+
+  <code>
+  443/tcp open  https
+  | ssl-cert: Subject: commonName=www.paypal.com/organizationName=PayPal, Inc.
+  /stateOrProvinceName=California/countryName=US
+  | Subject Alternative Name: DNS:www.paypal.com, DNS:fastlane.paypal.com,
+  DNS:secure.paypal.com, DNS:www-st.paypal.com, DNS:connect.paypal.com,
+  ...
+  DNS:es.paypal-qrc.com, DNS:www.fastlane.paypal.com
+  | Issuer: commonName=DigiCert SHA2 Extended Validation Server CA
+  /organizationName=DigiCert Inc/countryName=US/organizationalUnitName=www.digicert.com
+  | Public Key type: rsa
+  | Public Key bits: 2048
+  | Signature Algorithm: sha256WithRSAEncryption
+  | Not valid before: 2024-02-08T00:00:00
+  | Not valid after:  2025-02-08T23:59:59
+  | MD5:     7cc7 a345 a164 dfb1 4690 0277 a540 f636
+  | SHA-1:   9269 a100 8f61 aa60 1706 fc85 fd47 d277 66c0 f591
+  |_SHA-256: d76b 791c e89c 043a c25d 19f3 97b2 91d5 5d94 b1c2 72df 8d1f 4bab fdc1 91a7 413b
+  </code>
+
+  With <code>-vv</code> it adds the PEM-encoded contents of the entire
+  certificate.
+
+  <code>
+  443/tcp open  https
+  | ssl-cert: Subject: commonName=www.paypal.com/organizationName=PayPal, Inc.
+  /stateOrProvinceName=California/countryName=US
+  | Subject Alternative Name: DNS:www.paypal.com, DNS:fastlane.paypal.com,
+  DNS:secure.paypal.com, DNS:www-st.paypal.com, DNS:connect.paypal.com,
+  ...
+  DNS:es.paypal-qrc.com, DNS:www.fastlane.paypal.com
+  | Issuer: commonName=DigiCert SHA2 Extended Validation Server CA
+  /organizationName=DigiCert Inc/countryName=US/organizationalUnitName=www.digicert.com
+  | Public Key type: rsa
+  | Public Key bits: 2048
+#################################################################
+
+$ nmap --script ssl-cert -p 8443 -oA /home/mg/evidencias/lab05/ssl_cert 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+Nmap scan report for 192.168.56.103
+Host is up (0.000096s latency).
+
+PORT     STATE SERVICE
+8443/tcp open  https-alt
+| ssl-cert: Subject: commonName=lab.magalena.local/organizationName=Laboratorio academico local/countryName=PA
+| Issuer: commonName=lab.magalena.local/organizationName=Laboratorio academico local/countryName=PA
+| Public Key type: rsa
+| Public Key bits: 2048
+| Signature Algorithm: sha256WithRSAEncryption
+| Not valid before: 2026-10-06T18:31:13
+| Not valid after:  2026-11-05T18:31:13
+| MD5:     42fd f0ef 2040 c09b 1d2d ee99 e7d5 3c29
+| SHA-1:   4fe4 de55 576d 2c2d fc96 b1ed 23a9 e16a 62f3 53dc
+|_SHA-256: a89d a637 4a97 b53d 1d94 33fc 23d5 e5c3 a2e4 2401 2147 fb2c 5385 7dcb 00d1 8f06
+
+Nmap done: 1 IP address (1 host up) scanned in 5.07 seconds
+
+==========================================================
+ 5.5  http-title, http-headers, http-server-header (categoria: safe)
+      Extraen el titulo de la pagina, sus cabeceras y el
+      identificador del servidor. Peticiones HTTP normales.
+==========================================================
+
+################ DOCUMENTACION OFICIAL DEL SCRIPT ################
+$ nmap --script-help http-title
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+
+http-title
+Categories: default discovery safe
+https://nmap.org/nsedoc/scripts/http-title.html
+  Shows the title of the default page of a web server.
+
+  The script will follow up to 5 HTTP redirects, using the default rules in the
+  http library.
+#################################################################
+
+$ nmap --script http-title,http-headers,http-server-header -p 8080 -oA /home/mg/evidencias/lab05/http 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:26 -0400
+Nmap scan report for 192.168.56.103
+Host is up (0.00024s latency).
+
+PORT     STATE SERVICE
+8080/tcp open  http-proxy
+| http-headers: 
+|   Server: SimpleHTTP/0.6 Python/3.13.14
+|   Date: Tue, 06 Oct 2026 19:26:48 GMT
+|   Content-type: text/html; charset=utf-8
+|   Content-Length: 386
+|   
+|_  (Request type: HEAD)
+|_http-server-header: SimpleHTTP/0.6 Python/3.13.14
+|_http-title: Directory listing for /
+
+Nmap done: 1 IP address (1 host up) scanned in 3.65 seconds
+
+==========================================================
+ 5.6  Prueba negativa consciente
+      Se invoca un script que NO corresponde al servicio para
+      documentar como se comporta Nmap cuando el script no
+      aplica. Esto no es un fallo, es el resultado esperado.
+==========================================================
+$ nmap --script ssl-cert -p 8080 192.168.56.103
+Host is up (0.00016s latency).
+
+PORT     STATE SERVICE
+8080/tcp open  http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 0.98 seconds
+
+==========================================================
+ 5.7  Listado de scripts instalados disponibles (para mostrar
+       que la seleccion fue deliberada y no una categoria)
+==========================================================
+$ ls /usr/share/nmap/scripts | wc -l
+612
+Scripts ejecutados en este laboratorio: 6 de ellos
+
+--- Ficheros generados -------------------------------------------
+total 68
+drwxrwxr-x 2 mg mg 4096 Oct  6 15:26 .
+drwx------ 8 mg mg 4096 Oct  6 15:12 ..
+-rw-rw-r-- 1 mg mg 8192 Oct  6 15:26 e05_nse.typescript
+-rw-rw-r-- 1 mg mg  344 Oct  6 15:26 ftp_anon.gnmap
+-rw-rw-r-- 1 mg mg  365 Oct  6 15:26 ftp_anon.nmap
+-rw-rw-r-- 1 mg mg 1418 Oct  6 15:26 ftp_anon.xml
+-rw-rw-r-- 1 mg mg  414 Oct  6 15:26 http.gnmap
+-rw-rw-r-- 1 mg mg  694 Oct  6 15:26 http.nmap
+-rw-rw-r-- 1 mg mg 1915 Oct  6 15:26 http.xml
+-rw-rw-r-- 1 mg mg  352 Oct  6 15:26 ssh_algos.gnmap
+-rw-rw-r-- 1 mg mg 1426 Oct  6 15:26 ssh_algos.nmap
+-rw-rw-r-- 1 mg mg 3756 Oct  6 15:26 ssh_algos.xml
+-rw-rw-r-- 1 mg mg  354 Oct  6 15:26 ssl_cert.gnmap
+-rw-rw-r-- 1 mg mg  966 Oct  6 15:26 ssl_cert.nmap
+-rw-rw-r-- 1 mg mg 5312 Oct  6 15:26 ssl_cert.xml
+
+==================================================================
+ LABORATORIO 05 - FIN  2026-10-06T15:26:49-04:00
+==================================================================
+
+Script done on 2026-10-06 15:26:49-04:00 [COMMAND_EXIT_CODE="0"]

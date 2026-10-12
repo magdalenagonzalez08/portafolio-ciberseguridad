@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio 03. Puertos TCP y estados | Portafolio de ciberseguridad</title>
+<meta name="description" content="Laboratorio 03: escaneo SYN y TCP connect de todos los puertos, comparación aislada de motivos, capacidades de Linux, captura de paquetes y registro de sshd.">
+<script>
+(function(){try{var t=localStorage.getItem("tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Portafolio de <span>laboratorios</span></a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="../index.html#proyecto">Proyecto</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../index.html#metodologia">Metodología</a>
+      <a href="../index.html#recursos">Recursos</a>
+        <button class="theme-toggle" type="button" aria-label="Cambiar tema">☾</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Laboratorio 03 de 06 · Estado completado</p>
+      <h1>Puertos TCP y estados</h1>
+      <p class="lede">Los 65 535 puertos TCP escaneados dos veces, con <code>-sS</code> y con <code>-sT</code>, obteniendo el mismo inventario de cuatro puertos abiertos pero estados opuestos en el resto. El laboratorio explica por qué, y documenta también lo que no se pudo comprobar.</p>
+    </div>
+  </div>
+
+  <div class="wrap section">
+
+    <nav class="toc" aria-label="Índice del informe">
+      <h2>Índice del informe</h2>
+      <ol>
+        <li><a href="#s1">Resumen para selección</a></li>
+        <li><a href="#s2">Objetivo técnico</a></li>
+        <li><a href="#s3">Entorno y alcance</a></li>
+        <li><a href="#s4">Conocimientos previos</a></li>
+        <li><a href="#s5">Procedimiento reproducible</a></li>
+        <li><a href="#s6">Comandos y opciones</a></li>
+        <li><a href="#s7">Resultados observados</a></li>
+        <li><a href="#s8">Evidencias vinculadas</a></li>
+        <li><a href="#s9">Interpretación técnica</a></li>
+        <li><a href="#s10">Implicación defensiva</a></li>
+        <li><a href="#s11">Errores y limitaciones</a></li>
+        <li><a href="#s12">Conclusión</a></li>
+        <li><a href="#s13">Preguntas de entrevista</a></li>
+        <li><a href="#s14">Referencias</a></li>
+      </ol>
+    </nav>
+
+<section id="s1">
+      <h2>1. Resumen para una persona de selección</h2>
+      <p>Dos escaneos de todos los puertos sobre <code>192.168.56.103</code> devuelven los mismos cuatro puertos abiertos, 21, 22, 8080 y 8443. La diferencia está en los otros 65 531 puertos. Con <code>-sS</code> aparecen como <strong>filtrados</strong> y el escaneo tarda 122,91 segundos. Con <code>-sT</code> aparecen como <strong>cerrados</strong> y tarda 4,43 segundos.</p>
+      <p>El laboratorio desmonta la lectura obvia. No hay un firewall que aparezca y desaparece según la herramienta. La diferencia se aísla con una prueba controlada donde solo cambia el destino, se explica con la capacidad <code>cap_net_raw</code> que hace que <code>-sS</code> funcione sin root en este equipo, y se contrasta con la interfaz de captura que Nmap declara con <code>-d</code>.</p>
+      <div class="note">
+        <span class="tag">Lo que no se pudo comprobar</span>
+        <p>Dos intentos de evidencia fallaron y quedan documentados como tales. <code>tcpdump</code> no tenía permiso para capturar, y los intentos de ver el escaneo en el registro de <code>sshd</code> dieron cero eventos incluso con <code>-sT</code>, lo cual no coincide con lo que produce una conexión hecha a mano. Ninguno de los dos resultados se presentó como si hubiera salido bien.</p>
+      </div>
+    </section>
+
+<section id="s2">
+      <h2>2. Objetivo técnico</h2>
+      <ul>
+        <li>Ejecutar el barrido de los 65 535 puertos TCP con los dos modos principales y comparar inventario, estados y duración.</li>
+        <li>Identificar la fuente de las capacidades que permiten el escaneo SYN sin privilegios de root.</li>
+        <li>Aislar la causa de la discrepancia <code>filtered</code> frente a <code>closed</code> con una comparación controlada.</li>
+        <li>Determinar sobre qué interfaz captura Nmap cuando el destino es el propio equipo.</li>
+        <li>Intentar verificar la traza en captura de paquetes y en el registro del servidor SSH, dejando constancia del resultado real.</li>
+        <li>Cuantificar de nuevo el coste de la resolución de nombres dentro de un escaneo de puertos.</li>
+      </ul>
+    </section>
+
+<section id="s3">
+      <h2>3. Entorno y alcance</h2>
+      <p>Línea base heredada del Laboratorio 01 y no modificada. Objetivo autorizado <code>192.168.56.103</code> más el bucle <code>127.0.0.1</code> como referencia.</p>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 1. Puertos abiertos declarados por ambos modos de escaneo.</caption>
+          <thead><tr><th>Puerto</th><th>Servicio</th><th>Estado</th><th>Motivo</th><th>Origen del servicio</th></tr></thead>
+          <tbody>
+            <tr><td><code>21/tcp</code></td><td>ftp</td><td>open</td><td><code>syn-ack</code></td><td>Preexistente, vsftpd 3.0.5</td></tr>
+            <tr><td><code>22/tcp</code></td><td>ssh</td><td>open</td><td><code>syn-ack</code></td><td>Preexistente, canal de gestión</td></tr>
+            <tr><td><code>8080/tcp</code></td><td>http-proxy</td><td>open</td><td><code>syn-ack</code></td><td>Añadido por este proyecto</td></tr>
+            <tr><td><code>8443/tcp</code></td><td>https-alt</td><td>open</td><td><code>syn-ack</code></td><td>Añadido por este proyecto</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Fuera de alcance</span>
+        <p>Sin cambios respecto al Laboratorio 01. No se escaneó ninguna otra dirección, no se realizó denegación de servicio, no se usó fuerza bruta y no se modificó firewall ni configuración de red.</p>
+      </div>
+    </section>
+
+<section id="s4">
+      <h2>4. Conocimientos previos</h2>
+      <ul>
+        <li><strong>El proceso de tres vías de TCP</strong> y los mensajes SYN, SYN-ACK, ACK y RST.</li>
+        <li><strong>La diferencia entre un puerto cerrado y uno filtrado</strong>, cerrado responde con RST y filtrado no responde.</li>
+        <li><strong>Las capacidades de Linux</strong>, <code>cap_net_raw</code>, <code>cap_net_admin</code> y <code>cap_net_bind_service</code>, introducidas en el Laboratorio 01.</li>
+        <li><strong>Cómo funciona <code>connect()</code></strong> del sistema y por qué no necesita sockets crudos.</li>
+        <li><strong>Journal de systemd</strong> con <code>journalctl</code> y su filtro por unidad y por marca de tiempo.</li>
+        <li><strong>Identificadores de proceso</strong> (<em>pid</em>) para correlacionar eventos con una ejecución concreta.</li>
+      </ul>
+    </section>
+
+<section id="s5">
+      <h2>5. Procedimiento reproducible</h2>
+      <p>El laboratorio se dividió en cinco ejecuciones para poder aislar cada pregunta y conservar la evidencia por separado.</p>
+
+      <h4>Paso 1 · Escaneos principales</h4>
+      <pre class="cmd"><code>scp scripts/lab03_puertos_tcp.sh mg@192.168.56.103:~/labenv/scripts/
+ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab03_puertos_tcp.sh' ~/evidencias/lab03/e03_puertos_tcp.typescript"</code></pre>
+
+      <h4>Paso 2 · Comparación aislada y revisión de registros</h4>
+      <pre class="cmd"><code>ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab03b_aislamiento.sh' ~/evidencias/lab03/e03b_aislamiento.typescript"</code></pre>
+
+      <h4>Paso 3 · Interfaz de captura y método de lectura del journal</h4>
+      <pre class="cmd"><code>ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab03c_confirmacion.sh' ~/evidencias/lab03/e03c_confirmacion.typescript"</code></pre>
+
+      <h4>Paso 4 · Captura real y contraste de registros con tres métodos</h4>
+      <pre class="cmd"><code>ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab03d_captura_y_log.sh' ~/evidencias/lab03/e03d_captura_y_log.typescript"</code></pre>
+
+      <h4>Paso 5 · Diagnóstico del fallo de captura y del coste DNS</h4>
+      <pre class="cmd"><code>ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab03e_diagnostico.sh' ~/evidencias/lab03/e03e_diagnostico.typescript"</code></pre>
+
+      <h4>Paso 6 · Recogida</h4>
+      <pre class="cmd"><code>scp -r mg@192.168.56.103:~/evidencias/lab03 evidencias/</code></pre>
+    </section>
+
+<section id="s6">
+      <h2>6. Comandos exactos y explicación de sus opciones</h2>
+
+      <pre class="cmd"><span class="cmd-label">Barrido completo, dos modos</span><code>nmap -sS -p- --reason -oA syn_full 192.168.56.103
+nmap -sT -p- --reason -oA connect_full 192.168.56.103</code></pre>
+      <ul>
+        <li><code>-p-</code> equivale a <code>-p 1-65535</code>, los 65 535 puertos TCP.</li>
+        <li><code>--reason</code> añade la columna de motivo a cada fila, que es el dato central de este laboratorio.</li>
+        <li><code>-sS</code> envía un SYN y analiza la respuesta sin completar la conexión. <code>-sT</code> deja que el sistema haga la conexión completa.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Comparación controlada</span><code>nmap -sS -p 1-200 --reason 127.0.0.1
+nmap -sS -p 1-200 --reason 192.168.56.103
+nmap -sT -p 1-200 --reason 192.168.56.103</code></pre>
+      <ul>
+        <li>Las tres comparten opciones y rango, cambia una sola variable por vez. Eso es lo que convierte una observación en una atribución.</li>
+        <li>Se usó un rango corto, 1 a 200, para que las tres pruebas sean rápidas y comparables.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Origen de privilegios</span><code>cat /usr/bin/nmap
+getcap -v /usr/lib/nmap/nmap
+grep CapEff /proc/self/status</code></pre>
+      <ul>
+        <li><code>/usr/bin/nmap</code> es un envoltorio en <code>sh</code>, no el binario real.</li>
+        <li><code>getcap -v</code> muestra las capacidades de archivo, que se heredan al ejecutar.</li>
+        <li><code>CapEff</code> de <code>/proc/self/status</code> muestra las capacidades efectivas de la sesión actual, aquí cero.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Interfaz de captura y verbose</span><code>nmap -sS -p 22 -d 192.168.56.103 2&gt;&amp;1 | grep -i 'capture filter'
+nmap -sS -p 22,21 -v 192.168.56.103
+nmap -sT -p 22,21 -v 192.168.56.103</code></pre>
+      <ul>
+        <li><code>-d</code> aumenta el nivel de depuración e imprime, entre otras cosas, el filtro de captura y el dispositivo usado.</li>
+        <li><code>-v</code> muestra el contador <code>Raw packets sent</code>, que distingue un escaneo SYN real de una conexión por sistema.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Registro del servidor SSH</span><code>journalctl -u ssh --since "@$MARCA" --no-pager
+nc -z -w 2 192.168.56.103 22
+timeout 3 bash -c 'exec 3&lt;&gt;/dev/tcp/192.168.56.103/22; sleep 1'</code></pre>
+      <ul>
+        <li><code>--since "@$MARCA"</code> recorta el journal en el instante previo a la prueba, evitando leer el histórico completo.</li>
+        <li><code>nc -z</code> abre y cierra una conexión TCP sin enviar datos.</li>
+        <li>El bloque con <code>/dev/tcp</code> mantiene la conexión un segundo, que es lo que provoca los eventos distintos.</li>
+      </ul>
+    </section>
+
+<section id="s7">
+      <h2>7. Resultados observados</h2>
+
+      <h3>7.1 Por qué <code>-sS</code> funciona sin root</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/e03_puertos_tcp.typescript</span><span>sección [3.1]</span></div>
+        <pre><code>$ cat /usr/bin/nmap
+#!/usr/bin/env sh
+set -e
+if [ "$(id -u)" -eq 0 ] || [ "$1" = "--resume" ]; then
+  exec /usr/lib/nmap/nmap "$@"
+else
+  exec /usr/lib/nmap/nmap --privileged "$@"
+fi
+
+$ getcap -v /usr/lib/nmap/nmap
+/usr/lib/nmap/nmap cap_net_bind_service,cap_net_admin,cap_net_raw=eip
+
+$ grep CapEff /proc/self/status
+CapEff:	0000000000000000</code></pre>
+        <figcaption><strong>Figura 1.</strong> Envoltorio de Kali, capacidades del binario real y capacidades de la sesión. Evidencia, <code>e03_puertos_tcp.typescript</code> sección [3.1].</figcaption>
+      </div>
+      <p>Kali instala un envoltorio que añade <code>--privileged</code> cuando no se es root. Ese indicador le dice a Nmap que use los sockets crudos que el binario ya puede abrir gracias a <code>cap_net_raw</code> en el archivo. La sesión del usuario tiene <code>CapEff 0x0</code>, así que el privilegio viene del binario, no del usuario.</p>
+
+      <h3>7.2 Prueba de síntesis, lo que cuentan los paquetes</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/e03_puertos_tcp.typescript</span><span>sección [3.2]</span></div>
+        <pre><code>$ nmap -sS -p 22,21 -v 192.168.56.103
+           Raw packets sent: 2 (88B) | Rcvd: 5 (216B)
+
+$ nmap -sT -p 22,21 -v 192.168.56.103
+           Raw packets sent: 0 (0B) | Rcvd: 0 (0B)</code></pre>
+        <figcaption><strong>Figura 2.</strong> Contador de paquetes crudos en cada modo. Evidencia, <code>e03_puertos_tcp.typescript</code> sección [3.2].</figcaption>
+      </div>
+      <p>Dos puertos, dos paquetes SYN enviados con <code>-sS</code>. Con <code>-sT</code> no se envía ninguno porque la conexión la realiza el sistema operativo con <code>connect()</code>, que Nmap no cuenta como paquete crudo.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab03-capacidades.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab03-capacidades.png" alt="Pantalla con por que -sS funciona sin root">
+        <figcaption><strong>Captura 1.</strong> Envoltorio de Kali, capacidades del binario de Nmap, usuario de la sesión y comparación del contador de paquetes crudos entre <code>-sS</code> y <code>-sT</code>.</figcaption>
+      </figure>
+
+      <h3>7.3 Barrido de los 65 535 puertos</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/syn_full.nmap</span><span>y connect_full.nmap</span></div>
+        <pre><code>$ nmap -sS -p- --reason -oA syn_full 192.168.56.103
+Host is up, received localhost-response (0.00010s latency).
+Not shown: 65531 filtered tcp ports (no-response)
+PORT     STATE SERVICE    REASON
+21/tcp   open  ftp        syn-ack ttl 64
+22/tcp   open  ssh        syn-ack ttl 64
+8080/tcp open  http-proxy syn-ack ttl 64
+8443/tcp open  https-alt  syn-ack ttl 64
+Nmap done: 1 IP address (1 host up) scanned in 122.91 seconds
+
+$ nmap -sT -p- --reason -oA connect_full 192.168.56.103
+Not shown: 65531 closed tcp ports (conn-refused)
+PORT     STATE SERVICE    REASON
+21/tcp   open  ftp        syn-ack
+22/tcp   open  ssh        syn-ack
+8080/tcp open  http-proxy syn-ack
+8443/tcp open  https-alt  syn-ack
+Nmap done: 1 IP address (1 host up) scanned in 4.43 seconds</code></pre>
+        <figcaption><strong>Figura 3.</strong> Barrido completo en ambos modos. Evidencia, <code>syn_full.nmap</code> y <code>connect_full.nmap</code>.</figcaption>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 2. Comparación cuantitativa de los barridos.</caption>
+          <thead><tr><th>Métrica</th><th><code>-sS</code></th><th><code>-sT</code></th></tr></thead>
+          <tbody>
+            <tr><td>Puertos abiertos</td><td>4</td><td>4, los mismos</td></tr>
+            <tr><td>Estado del resto</td><td><code>filtered</code>, motivo <code>no-response</code></td><td><code>closed</code>, motivo <code>conn-refused</code></td></tr>
+            <tr><td>Duración, barrido completo</td><td>122,91 s</td><td>4,43 s</td></tr>
+            <tr><td>Duración, top 1000</td><td>9,97 s</td><td>4,94 s</td></tr>
+            <tr><td>Paquetes crudos</td><td>sí</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab03-barrido.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab03-barrido.png" alt="Pantalla con el barrido de todos los puertos">
+        <figcaption><strong>Captura 2.</strong> Resultado del barrido de los 65 535 puertos en los dos modos, con los cuatro puertos abiertos y el estado que se le asigna al resto en cada caso.</figcaption>
+      </figure>
+
+      <h3>7.4 Comparación aislada</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/e03b_aislamiento.typescript</span><span>secciones [B] y [C]</span></div>
+        <pre><code>$ nmap -sS -p 1-200 --reason 127.0.0.1
+Not shown: 198 closed tcp ports (reset)          0.16 segundos
+
+$ nmap -sS -p 1-200 --reason 192.168.56.103
+Not shown: 198 filtered tcp ports (no-response)  7.13 segundos
+
+$ nmap -sT -p 1-200 --reason 192.168.56.103
+Not shown: 198 closed tcp ports (conn-refused)   2.59 segundos
+
+XML correspondiente:
+  cmp_syn_loop     -&gt; &lt;extraports state="closed"   count="198"&gt;
+  cmp_syn_target   -&gt; &lt;extraports state="filtered" count="198"&gt;
+  cmp_ct_target    -&gt; &lt;extraports state="closed"   count="198"&gt;</code></pre>
+        <figcaption><strong>Figura 4.</strong> Tres pruebas con una sola variable cambiando por vez. Evidencia, <code>e03b_aislamiento.typescript</code> secciones [B] y [C].</figcaption>
+      </div>
+      <p>Con <code>-sS</code> hacia <code>127.0.0.1</code> los puertos cerrados responden con <code>reset</code>. Con <code>-sS</code> hacia <code>192.168.56.103</code> los mismos puertos no responden y quedan <code>filtered</code>. Con <code>-sT</code> hacia la misma dirección vuelven a estar <code>closed</code>, esta vez por <code>conn-refused</code>.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab03-aislamiento.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab03-aislamiento.png" alt="Pantalla con la comparacion controlada de los escaneos">
+        <figcaption><strong>Captura 3.</strong> Tres pruebas con una sola variable cambiando por vez, misma franja de puertos contra el bucle de trabajo y contra el objetivo, en modo SYN y en modo connect.</figcaption>
+      </figure>
+
+      <h3>7.5 Interfaz que usa Nmap para capturar</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/e03c_confirmacion.typescript</span><span>sección [A]</span></div>
+        <pre><code>$ nmap -sS -p 22 -d 192.168.56.103 2&gt;&amp;1 | grep -i 'capture filter'
+Packet capture filter (device lo): dst host 192.168.56.103 and (icmp or
+icmp6 or ((tcp or udp or sctp) and (src host 192.168.56.103)))
+
+$ nmap -sS -p 22 -d 127.0.0.1 2&gt;&amp;1 | grep -i 'capture filter'
+Packet capture filter (device lo): dst host 127.0.0.1 and (icmp or
+icmp6 or ((tcp or udp or sctp) and (src host 127.0.0.1)))</code></pre>
+        <figcaption><strong>Figura 5.</strong> Dispositivo de captura declarado por Nmap en ambos destinos. Evidencia, <code>e03c_confirmacion.typescript</code> sección [A].</figcaption>
+      </div>
+      <p>En los dos casos el dispositivo es <code>lo</code>, confirmando desde otra fuente lo que el Laboratorio 01 ya mostró con <code>ip route get</code>.</p>
+
+      <h3>7.6 Intento de captura de paquetes, resultado fallido</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/e03e_diagnostico.typescript</span><span>sección [A]</span></div>
+        <pre><code>$ getcap -v /usr/bin/tcpdump
+/usr/bin/tcpdump
+$ timeout 3 tcpdump -i lo -n -c 3
+tcpdump: lo: You don't have permission to perform this capture on that device
+(Attempt to create packet socket failed - CAP_NET_RAW may be required)
+$ ls -l /tmp/lab03_cap.pcap
+ls: cannot access '/tmp/lab03_cap.pcap': No such file or directory</code></pre>
+        <figcaption><strong>Figura 6.</strong> Diagnóstico del intento de captura. Evidencia, <code>e03e_diagnostico.typescript</code> sección [A].</figcaption>
+      </div>
+      <p><code>tcpdump</code> no tiene capacidades en el archivo y la sesión tiene <code>CapEff 0x0</code>, así que nunca abrió el socket. El fichero <code>.pcap</code> no llegó a crearse. <strong>La salida previa que decía cero paquetes capturados significa que la captura falló, no que no hubiera tráfico.</strong></p>
+
+      <h3>7.7 Registro de sshd durante cada prueba</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/e03d_captura_y_log.typescript</span><span>sección [C]</span></div>
+        <pre><code>Resumen de eventos de sshd:
+  nmap -sT ................. 0
+  nc -z .................... 1
+    Oct 06 15:09:43 magdalena sshd-session[43849]: Connection closed by
+    192.168.56.103 port 33432 [preauth]
+  bash abierta 1 segundo ... 2
+    Oct 06 15:09:48 magdalena sshd-session[43893]: error:
+    kex_exchange_identification: read: Connection reset by peer [preauth]
+    Oct 06 15:09:48 magdalena sshd-session[43893]: Connection reset by
+    192.168.56.103 port 33436 [preauth]</code></pre>
+        <figcaption><strong>Figura 7.</strong> Eventos de <code>sshd</code> por método, en la misma ventana de tiempo. Evidencia, <code>e03d_captura_y_log.typescript</code> sección [C].</figcaption>
+      </div>
+      <p>Los métodos manuales dejan traza, <code>nc -z</code> deja un evento y la conexión mantenida deja dos. <strong>El escaneo con <code>-sT</code> no dejó ninguno</strong>, ni con <code>--max-retries</code> ni repetido con <code>-n</code>. El motivo no se determinó y queda como pregunta abierta en la sección 11.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab03-registro.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab03-registro.png" alt="Pantalla con los eventos de sshd por metodo">
+        <figcaption><strong>Captura 4.</strong> Eventos de <code>sshd</code> registrados tras cada método de contacto en la misma ventana de tiempo, con el recuento por método.</figcaption>
+      </figure>
+
+      <h3>7.8 Coste de la resolución de nombres</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab03/e03e_diagnostico.typescript</span><span>sección [B]</span></div>
+        <pre><code>  -sT -p 22 SIN -n -&gt; 2.61 s     -sT -p 22 CON -n -&gt; 0.15 s
+  -sS -p 22 CON -n -&gt; 0.35 s
+  -sT -p 21 SIN -n -&gt; 4.68 s     -sT -p 21 CON -n -&gt; 0.13 s
+  -sS -p 21 CON -n -&gt; 0.30 s</code></pre>
+        <figcaption><strong>Figura 8.</strong> Impacto de <code>-n</code> en un escaneo de un solo puerto. Evidencia, <code>e03e_diagnostico.typescript</code> sección [B].</figcaption>
+      </div>
+      <p>Repite el hallazgo del Laboratorio 02 en el contexto de escaneo de puertos. Sin <code>-n</code> el mismo comando tarda entre 2,6 y 4,7 segundos, con <code>-n</code> baja a décimas.</p>
+    </section>
+
+<section id="s8">
+      <h2>8. Evidencias vinculadas</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 3. Archivos de evidencia del Laboratorio 03.</caption>
+          <thead><tr><th>Archivo</th><th>Tipo</th><th>Contenido</th></tr></thead>
+          <tbody>
+            <tr><td><a href="../evidencias/lab03/e03_puertos_tcp.typescript">e03_puertos_tcp.typescript</a></td><td>Transcripción de terminal</td><td>Capacidades, prueba de paquetes y los dos barridos completos</td></tr>
+            <tr><td><a href="../evidencias/lab03/e03b_aislamiento.typescript">e03b_aislamiento.typescript</a></td><td>Transcripción de terminal</td><td>Comparación controlada y primera lectura del journal</td></tr>
+            <tr><td><a href="../evidencias/lab03/e03c_confirmacion.typescript">e03c_confirmacion.typescript</a></td><td>Transcripción de terminal</td><td>Interfaz de captura con <code>-d</code> y método de lectura por marca de tiempo</td></tr>
+            <tr><td><a href="../evidencias/lab03/e03d_captura_y_log.typescript">e03d_captura_y_log.typescript</a></td><td>Transcripción de terminal</td><td>Intento de captura y contraste de tres métodos contra el registro de sshd</td></tr>
+            <tr><td><a href="../evidencias/lab03/e03e_diagnostico.typescript">e03e_diagnostico.typescript</a></td><td>Transcripción de terminal</td><td>Causa del fallo de captura y coste DNS</td></tr>
+            <tr><td><code>syn_full, connect_full, syn_top1000, ct_top1000</code></td><td><code>.nmap</code>, <code>.xml</code>, <code>.gnmap</code></td><td>Salidas <code>-oA</code> de los barridos</td></tr>
+            <tr><td><code>cmp_syn_loop, cmp_syn_target, cmp_ct_target</code></td><td><code>.xml</code></td><td>Comparación controlada, con la etiqueta <code>extraports</code></td></tr>
+            <tr><td><a href="../scripts/lab03_puertos_tcp.sh">scripts/lab03_puertos_tcp.sh</a></td><td>Script de ejecución</td><td>Barridos principales</td></tr>
+            <tr><td><code>lab03b_aislamiento, lab03c_confirmacion, lab03d_captura_y_log, lab03e_diagnostico</code></td><td>Scripts de ejecución</td><td>Cuatro fases complementarias</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+<section id="s9">
+      <h2>9. Interpretación técnica</h2>
+
+      <p><strong>Evidencia.</strong> Con <code>-sS</code> los puertos cerrados quedan <code>filtered (no-response)</code> y con <code>-sT</code> quedan <code>closed (conn-refused)</code>, sobre la misma dirección y el mismo rango.</p>
+      <p><strong>Interpretación.</strong> Un RST llega, pero el escaneo SYN no lo está recibiendo. Nmap envía el SYN y espera la respuesta con su captura propia, mientras que <code>-sT</code> usa el socket del sistema, que sí recibe el RST. Al no recibir nada, el modo SYN clasifica el puerto como filtrado, que en Nmap significa simplemente <em>sin respuesta</em> y no implica necesariamente un firewall.</p>
+
+      <p><strong>Evidencia.</strong> La misma dirección con <code>-sS</code> hacia <code>127.0.0.1</code> da <code>closed (reset)</code> en 0,16 s, y hacia <code>192.168.56.103</code> da <code>filtered (no-response)</code> en 7,13 s.</p>
+      <p><strong>Interpretación.</strong> La diferencia no está en la opción sino en la dirección. El bucle de trabajo se comporta de forma distinta al resto de direcciones locales en el recorrido del paquete. Con una sola variable cambiando por vez, la conclusión se atribuye al destino y no al modo de escaneo.</p>
+
+      <p><strong>Evidencia.</strong> <code>-d</code> declara <code>device lo</code> para ambos destinos, y el barrido completo tarda 122,91 s con <code>-sS</code> frente a 4,43 s con <code>-sT</code>.</p>
+      <p><strong>Interpretación.</strong> El tiempo extra del modo SYN se invierte en esperar respuestas que no llegan y en reintentos. El resultado final es idéntico, así que en este entorno <code>-sT</code> es más rápido y da el mismo inventario. Elegir SYN por costumbre aquí solo cuesta dos minutos.</p>
+
+      <p><strong>Evidencia.</strong> <code>tcpdump</code> no tiene capacidades y no creó el fichero <code>.pcap</code>.</p>
+      <p><strong>Interpretación.</strong> El dato correcto es <em>captura no realizada</em>. Contar cero paquetes en una captura que no llegó a abrirse habría sido un error de lectura. La verificación alternativa que sí funcionó fue <code>-d</code> de Nmap, que declara la interfaz desde su propio proceso.</p>
+    </section>
+
+<section id="s10">
+      <h2>10. Implicación defensiva y recomendaciones</h2>
+      <ul>
+        <li><strong><code>filtered</code> no es sinónimo de protegido.</strong> En Nmap el término cubre cualquier puerto sin respuesta. Reportarlo como firewall activo sin más evidencia introduce un error en el inventario.</li>
+        <li><strong>Elegir el modo de escaneo según el entorno.</strong> Aquí <code>-sT</code> dio el mismo inventario en menos de la veintava parte del tiempo. SYN aporta valor cuando hay elementos intermedios que filtrar, que es justo lo que falta en este laboratorio.</li>
+        <li><strong>El descubrimiento de puertos se detecta en el destino.</strong> Los intentos contra <code>sshd</code> muestran que una conexión breve puede no dejar traza, lo que limita la utilidad del registro como fuente de detección de escaneos.</li>
+        <li><strong>Para detectar escaneos conviene observar en el camino</strong>, con captura en la interfaz o con reglas de firewall, no esperando eventos en la aplicación.</li>
+        <li><strong>Conocer las capacidades del equipo</strong> evita diagnósticos erróneos. Aquí el binario tiene privilegios y la sesión no, y confundir los dos niveles lleva a conclusiones incorrectas sobre permisos.</li>
+      </ul>
+      <div class="note">
+        <span class="tag">Separación de capas</span>
+        <p>Los resultados de este laboratorio describen el comportamiento de Nmap contra este equipo local. No miden la efectividad de ningún firewall real y no deben presentarse como una prueba de resistencia.</p>
+      </div>
+    </section>
+
+<section id="s11">
+      <h2>11. Errores, limitaciones y puntos pendientes</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 4. Limitaciones reconocidas del Laboratorio 03.</caption>
+          <thead><tr><th>#</th><th>Limitación</th><th>Impacto</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>L1</td>
+              <td><code>tcpdump</code> no tenía <code>cap_net_raw</code> y no abrió el socket</td>
+              <td>No hay captura <code>.pcap</code> que respalde los paquetes observados</td>
+              <td><strong>Fallo declarado</strong>. La evidencia de interfaz se sustituyó por <code>-d</code> de Nmap</td>
+            </tr>
+            <tr>
+              <td>L2</td>
+              <td><code>nmap -sT</code> no genera eventos en <code>sshd</code>, mientras que <code>nc -z</code> sí genera uno</td>
+              <td>No se explicó el mecanismo exacto de la diferencia</td>
+              <td><strong>Pregunta abierta</strong>. Se dejó constancia de las tres medidas en la misma ventana</td>
+            </tr>
+            <tr>
+              <td>L3</td>
+              <td>El primer método de conteo incluía todos los eventos del journal y devolvía 1 incluso sin entradas</td>
+              <td>El número bruto no era comparable</td>
+              <td><strong>Corregido</strong>, se pasó a filtrar solo por unidad <code>ssh</code></td>
+            </tr>
+            <tr>
+              <td>L4</td>
+              <td><code>/var/log/auth.log</code> no existe en esta instalación</td>
+              <td>La primera aproximación al registro falló</td>
+              <td><strong>Resuelto</strong> con <code>journalctl</code></td>
+            </tr>
+            <tr>
+              <td>L5</td>
+              <td>No se realizó ninguna prueba de retransmisión ni timeout largo</td>
+              <td>Los tiempos reflejan la configuración por defecto de Nmap</td>
+              <td>Anotado en la Tabla 2</td>
+            </tr>
+            <tr>
+              <td>L6</td>
+              <td>Ruta por <code>lo</code>, heredada del Laboratorio 01</td>
+              <td>Sin latencia de red real</td>
+              <td>Declarado en todos los laboratorios</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>La limitación L2 es la que merece seguir investigando. Tres métodos distintos, dos de ellos hechos a mano, dan tres resultados distintos contra el mismo puerto, y la diferencia entre el escaneo automático y la conexión manual no se ha explicado. Se deja escrita la observación con sus números en lugar de proponer una causa que no se verificó.</p>
+    </section>
+
+<section id="s12">
+      <h2>12. Conclusión</h2>
+      <p>El laboratorio obtuvo el mismo inventario de cuatro puertos abiertos con los dos modos de escaneo y documentó por qué el resto de puertos aparece con estados distintos. La comparación controlada, donde solo cambia el destino, muestra que la discrepancia no la introduce la opción de escaneo.</p>
+      <p>Se explicó además el funcionamiento de <code>-sS</code> sin root, algo que en este equipo se resuelve con un envoltorio y un juego de capacidades sobre el binario, y se confirmó desde <code>-d</code> que Nmap captura en <code>lo</code>.</p>
+      <p>Dos intentos de evidencia no salieron y así constan, la captura con <code>tcpdump</code> y la traza en el registro de <code>sshd</code>. Presentarlos como resultados habría sido incorrecto, por lo que quedan en la tabla de limitaciones con la reprovisión que se aplicó en cada caso.</p>
+    </section>
+
+<section id="s13">
+      <h2>13. Preguntas de entrevista sobre esta práctica</h2>
+      <ol>
+        <li><strong>¿Qué significa <code>filtered</code> en Nmap?</strong> Que no hubo respuesta. No prueba por sí solo la existencia de un firewall, y por eso lo reporté como <code>no-response</code> junto con el motivo.</li>
+        <li><strong>¿Por qué <code>-sS</code> tarda 122 segundos y <code>-sT</code> solo 4?</strong> Porque espera respuestas que no llegan y hace reintentos. El inventario final es el mismo, así que en este entorno <code>-sT</code> fue la opción razonable.</li>
+        <li><strong>¿Cómo funciona <code>-sS</code> sin ser root?</strong> Kali envuelve el binario con <code>--privileged</code> y el binario real tiene <code>cap_net_raw</code> en el archivo. La sesión del usuario, en cambio, tiene <code>CapEff 0x0</code>.</li>
+        <li><strong>¿Qué prueba aísla la causa de la diferencia?</strong> <code>-sS -p 1-200</code> contra <code>127.0.0.1</code> frente a la misma opción contra <code>192.168.56.103</code>. Cambia solo el destino y el motivo pasa de <code>reset</code> a <code>no-response</code>.</li>
+        <li><strong>Tu captura no capturó nada, ¿lo reportaste como 0 paquetes?</strong> No. El fichero <code>.pcap</code> no llegó a crearse, así que el resultado correcto es captura fallida. Lo sustituí con <code>-d</code>, que declara la interfaz desde el propio proceso.</li>
+        <li><strong>¿Puedes detectar escaneos leyendo los logs de sshd?</strong> En esta prueba, no. <code>nmap -sT</code> dejó cero eventos mientras que <code>nc -z</code> dejó uno y una conexión mantenida dejó dos. El motivo sigue sin determinarse y así lo declaro.</li>
+        <li><strong>¿Algún hallazgo de seguridad?</strong> Ninguno que reportar. Los cuatro puertos abiertos ya estaban inventariados y dos los creó este proyecto. Lo útil aquí es la metodología de comparación controlada.</li>
+      </ol>
+    </section>
+
+<section id="s14">
+      <h2>14. Referencias oficiales utilizadas</h2>
+      <ul>
+        <li>Nmap, tipos y técnicas de escaneo. <a href="https://nmap.org/book/man-port-scanning-techniques.html">nmap.org/book/man-port-scanning-techniques.html</a></li>
+        <li>Nmap, interpretación de resultados y estados de puerto. <a href="https://nmap.org/book/man-port-specification.html">nmap.org/book/man-port-specification.html</a></li>
+        <li>capabilities(7), capacidades de Linux. <a href="https://man7.org/linux/man-pages/man7/capabilities.7.html">man7.org/linux/man-pages/man7/capabilities.7.html</a></li>
+        <li>getcap(8), página de manual. <a href="https://man7.org/linux/man-pages/man8/getcap.8.html">man7.org/linux/man-pages/man8/getcap.8.html</a></li>
+        <li>journalctl(1), página de manual. <a href="https://man7.org/linux/man-pages/man1/journalctl.1.html">man7.org/linux/man-pages/man1/journalctl.1.html</a></li>
+        <li>tcpdump(8), página de manual. <a href="https://www.tcpdump.org/manpages/tcpdump.1.html">tcpdump.org/manpages/tcpdump.1.html</a></li>
+        <li>RFC 793, Transmission Control Protocol. <a href="https://www.rfc-editor.org/rfc/rfc793">rfc-editor.org/rfc/rfc793</a></li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Enlaces del pie">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../pdf/informe-general.pdf">Informe general (PDF)</a>
+      <a href="../pdf/ficha-proyecto.pdf">Ficha del proyecto (PDF)</a>
+    </nav>
+    <p>Portafolio académico de laboratorios de ciberseguridad. Los resultados corresponden a ejecuciones reales sobre una máquina virtual propia. Los pendientes están marcados como tales.</p>
+    <p><a href="mailto:magdalenagonzalezcorreo@gmail.com">magdalenagonzalezcorreo@gmail.com</a> · <a href="https://www.linkedin.com/in/magdalenagonzalezpanama/?locale=es">LinkedIn de Magdalena Sarit González Bustillo</a></p>
+  </div>
+</footer>
+
+<script src="../js/main.js" defer></script>
+</body>
+</html>

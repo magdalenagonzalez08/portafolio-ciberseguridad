@@ -1,0 +1,8 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:35:05 2026 as: /usr/lib/nmap/nmap --privileged -sT -p 8080 --reason -oA /home/mg/evidencias/lab06/antes_ct 192.168.56.103
+Nmap scan report for 192.168.56.103
+Host is up, received localhost-response (0.000029s latency).
+
+PORT     STATE SERVICE    REASON
+8080/tcp open  http-proxy syn-ack
+
+# Nmap done at Tue Oct  6 15:35:09 2026 -- 1 IP address (1 host up) scanned in 4.14 seconds

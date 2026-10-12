@@ -1,0 +1,54 @@
+﻿# Configuracion de la VM "Kali Linux" leida desde el hipervisor (host Windows)
+# Comando: VBoxManage showvminfo "Kali Linux" --machinereadable
+# Fecha de captura (host): 2026-10-06T13:33:51-05:00
+
+name="Kali Linux"
+ostype="Linux 2.6 / 3.x / 4.x / 5.x (64-bit)"
+memory=4096
+cpus=7
+VMState="running"
+macaddress1="080027DD07D7"
+nic1="nat"
+macaddress2="080027B0B577"
+nic2="bridged"
+macaddress3="080027244BCF"
+nic3="hostonly"
+nic4="none"
+nic5="none"
+nic6="none"
+nic7="none"
+nic8="none"
+
+# Cruce de interfaces (modo VirtualBox -> MAC -> interfaz Linux -> IPv4):
+#   NIC1 nat      MAC 080027DD07D7 -> eth0  10.0.2.15/24
+#   NIC2 bridged  MAC 080027B0B577 -> eth1  sin IPv4
+#   NIC3 hostonly MAC 080027244BCF -> eth2  192.168.56.103/24
+
+# VBoxManage list dhcpservers
+NetworkName:    HostInterfaceNetworking-VirtualBox Host-Only Ethernet Adapter
+Dhcpd IP:       192.168.56.100
+LowerIPAddress: 192.168.56.101
+UpperIPAddress: 192.168.56.254
+NetworkMask:    255.255.255.0
+Enabled:        Yes
+Global Configuration:
+    minLeaseTime:     default
+    defaultLeaseTime: default
+    maxLeaseTime:     default
+    Forced options:   None
+    Suppressed opts.: None
+        1/legacy: 255.255.255.0
+Groups:               None
+Individual Configs:   None
+
+# VBoxManage list vms
+"Linux Mint" {a68eaf84-e5f7-4fc8-91d4-77d2a42a6787}
+"Kali Linux" {d845012c-e26a-4bc5-8433-e2ebf0997fe5}
+"Windows 7" {e019a38b-942e-468b-8f48-ed85736f1351}
+"GNS3 VM" {1f744b8e-c82a-4ad0-98e9-023497e205f9}
+"Linux Mint Ciber" {7ce32383-7f1b-4ecf-b69f-60872d6200b6}
+"Windows11-LAB" {fa7094f0-622b-49f0-8d43-c2dfc8d11aac}
+"Parrot Security " {db8d7ebf-3435-4024-a8b3-49757654e95c}
+"Kali 2026" {2d4e89e1-6c17-469d-8f60-8f0d640cb482}
+# VBoxManage list runningvms
+"Kali Linux" {d845012c-e26a-4bc5-8433-e2ebf0997fe5}

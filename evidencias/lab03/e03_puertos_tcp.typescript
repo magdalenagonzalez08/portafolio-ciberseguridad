@@ -1,0 +1,159 @@
+Script started on 2026-10-06 14:56:22-04:00 [COMMAND="bash ~/labenv/scripts/lab03_puertos_tcp.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 03 - PUERTOS TCP Y ESTADOS
+ Fecha: 2026-10-06T14:56:22-04:00
+ Objetivo autorizado: 192.168.56.103
+ Nmap: Nmap version 7.99 ( https://nmap.org )
+==================================================================
+
+--- [3.1] Por que -sS funciona sin root en este equipo --------------
+$ cat /usr/bin/nmap
+#!/usr/bin/env sh
+
+set -e
+
+if [ "$(id -u)" -eq 0 ] || [ "$1" = "--resume" ]; then
+  exec /usr/lib/nmap/nmap "$@"
+else
+  exec /usr/lib/nmap/nmap --privileged "$@"
+fi
+$ getcap -v /usr/lib/nmap/nmap
+/usr/lib/nmap/nmap cap_net_bind_service,cap_net_admin,cap_net_raw=eip
+$ id
+uid=1001(mg) gid=1001(mg) groups=1001(mg),0(root),4(adm),20(dialout),21(fax),24(cdrom),25(floppy),26(tape),27(sudo),29(audio),30(dip),44(video),46(plugdev),100(users),101(netdev),103(scanner),125(lpadmin),990(sambashare)
+
+Sesion actual:
+$ grep CapEff /proc/self/status
+CapEff:	0000000000000000
+CapEff = 0x0  -> CAP_NET_RAW activo: False
+
+--- [3.2] Prueba de sintesis: paquetes crudos, -sS frente a -sT -----
+$ nmap -sS -p 22,21 -v 192.168.56.103   (grep 'Raw packets')
+Nmap done: 1 IP address (1 host up) scanned in 4.71 seconds
+           Raw packets sent: 2 (88B) | Rcvd: 5 (216B)
+$ nmap -sT -p 22,21 -v 192.168.56.103   (grep 'Raw packets')
+Nmap done: 1 IP address (1 host up) scanned in 4.72 seconds
+           Raw packets sent: 0 (0B) | Rcvd: 0 (0B)
+
+--- [3.3] Registro de sshd ANTES de los escaneos -------------------
+$ wc -l /var/log/auth.log 2>/dev/null || echo '(no legible)'
+/home/mg/labenv/scripts/lab03_puertos_tcp.sh: line 51: /var/log/auth.log: No such file or directory
+  lineas antes: nolegible
+$ tail -5 /var/log/auth.log
+  (no legible para este usuario)
+
+--- [3.4] Escaneo SYN (-sS), todos los puertos ---------------------
+$ nmap -sS -p- --reason -oA /home/mg/evidencias/lab03/syn_full 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:56 -0400
+Nmap scan report for 192.168.56.103
+Host is up, received localhost-response (0.00010s latency).
+Not shown: 65531 filtered tcp ports (no-response)
+PORT     STATE SERVICE    REASON
+21/tcp   open  ftp        syn-ack ttl 64
+22/tcp   open  ssh        syn-ack ttl 64
+8080/tcp open  http-proxy syn-ack ttl 64
+8443/tcp open  https-alt  syn-ack ttl 64
+
+Nmap done: 1 IP address (1 host up) scanned in 122.91 seconds
+
+--- [3.5] Escaneo TCP connect (-sT), todos los puertos -------------
+$ nmap -sT -p- --reason -oA /home/mg/evidencias/lab03/connect_full 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:58 -0400
+Nmap scan report for 192.168.56.103
+Host is up, received localhost-response (0.00026s latency).
+Not shown: 65531 closed tcp ports (conn-refused)
+PORT     STATE SERVICE    REASON
+21/tcp   open  ftp        syn-ack
+22/tcp   open  ssh        syn-ack
+8080/tcp open  http-proxy syn-ack
+8443/tcp open  https-alt  syn-ack
+
+Nmap done: 1 IP address (1 host up) scanned in 4.43 seconds
+  duracion aproximada: SYN=123 s   connect=4 s
+
+--- [3.6] Registro de sshd DESPUES de ambos escaneos ---------------
+$ wc -l /var/log/auth.log
+/home/mg/labenv/scripts/lab03_puertos_tcp.sh: line 73: /var/log/auth.log: No such file or directory
+  lineas despues: nolegible
+$ tail -20 /var/log/auth.log (recientes)
+  (no legible)
+
+--- [3.7] Resumen de estados: -sS ----------------------------------
+$ grep Ports <syn_full.nmap> / recuento desde gnmap
+  Not shown: 65531 filtered tcp ports (no-response)
+  21/tcp   open  ftp        syn-ack ttl 64
+  22/tcp   open  ssh        syn-ack ttl 64
+  8080/tcp open  http-proxy syn-ack ttl 64
+  8443/tcp open  https-alt  syn-ack ttl 64
+Conteo SYN:
+
+--- [3.8] Resumen de estados: -sT ----------------------------------
+  Not shown: 65531 closed tcp ports (conn-refused)
+  21/tcp   open  ftp        syn-ack
+  22/tcp   open  ssh        syn-ack
+  8080/tcp open  http-proxy syn-ack
+  8443/tcp open  https-alt  syn-ack
+Conteo connect:
+
+--- [3.9] Diferencia entre ambas salidas ---------------------------
+  Los ficheros .gnmap DIFIEREN:
+    1c1
+    < # Nmap 7.99 scan initiated Tue Oct  6 14:56:33 2026 as: /usr/lib/nmap/nmap --privileged -sS -p- --reason -oA /home/mg/evidencias/lab03/syn_full 192.168.56.103
+    ---
+    > # Nmap 7.99 scan initiated Tue Oct  6 14:58:36 2026 as: /usr/lib/nmap/nmap --privileged -sT -p- --reason -oA /home/mg/evidencias/lab03/connect_full 192.168.56.103
+    3,4c3,4
+    < Host: 192.168.56.103 ()	Ports: 21/open/tcp//ftp///, 22/open/tcp//ssh///, 8080/open/tcp//http-proxy///, 8443/open/tcp//https-alt///	Ignored State: filtered (65531)
+    < # Nmap done at Tue Oct  6 14:58:36 2026 -- 1 IP address (1 host up) scanned in 122.91 seconds
+    ---
+    > Host: 192.168.56.103 ()	Ports: 21/open/tcp//ftp///, 22/open/tcp//ssh///, 8080/open/tcp//http-proxy///, 8443/open/tcp//https-alt///	Ignored State: closed (65531)
+    > # Nmap done at Tue Oct  6 14:58:40 2026 -- 1 IP address (1 host up) scanned in 4.43 seconds
+
+--- [3.10] Motivos declarados por nmap (--reason) ------------------
+Motivos distintos de 'reset' (es decir, puertos NO cerrados):
+  SYN     8080/tcp open  http-proxy syn-ack ttl 64
+  SYN     8443/tcp open  https-alt  syn-ack ttl 64
+  SYN           1 reason="localhost-response"
+  SYN           1 reason="no-response"
+  SYN           4 reason="syn-ack"
+  connect       1 reason="conn-refused"
+  connect       1 reason="localhost-response"
+  connect       4 reason="syn-ack"
+
+--- [3.11] Escaneo top 1000 para comparar tiempos -------------------
+$ time nmap -sS --top-ports 1000 -oA /home/mg/evidencias/lab03/syn_top1000 192.168.56.103
+8080/tcp open  http-proxy
+8443/tcp open  https-alt
+
+Nmap done: 1 IP address (1 host up) scanned in 9.97 seconds
+  SYN top1000: 10.04 s
+$ time nmap -sT --top-ports 1000 -oA /home/mg/evidencias/lab03/ct_top1000 192.168.56.103
+8080/tcp open  http-proxy
+8443/tcp open  https-alt
+
+Nmap done: 1 IP address (1 host up) scanned in 4.94 seconds
+  connect top1000: 5.03 s
+
+--- [3.12] Ficheros generados --------------------------------------
+total 80
+drwxrwxr-x 2 mg mg 4096 Oct  6 14:58 .
+drwx------ 5 mg mg 4096 Oct  6 14:56 ..
+-rw-rw-r-- 1 mg mg  451 Oct  6 14:58 connect_full.gnmap
+-rw-rw-r-- 1 mg mg  570 Oct  6 14:58 connect_full.nmap
+-rw-rw-r-- 1 mg mg 1928 Oct  6 14:58 connect_full.xml
+-rw-rw-r-- 1 mg mg  451 Oct  6 14:58 ct_top1000.gnmap
+-rw-rw-r-- 1 mg mg  484 Oct  6 14:58 ct_top1000.nmap
+-rw-rw-r-- 1 mg mg 9504 Oct  6 14:58 ct_top1000.xml
+-rw-rw-r-- 1 mg mg 4096 Oct  6 14:58 e03_puertos_tcp.typescript
+-rw-rw-r-- 1 mg mg  451 Oct  6 14:58 syn_full.gnmap
+-rw-rw-r-- 1 mg mg  597 Oct  6 14:58 syn_full.nmap
+-rw-rw-r-- 1 mg mg 1924 Oct  6 14:58 syn_full.xml
+-rw-rw-r-- 1 mg mg  454 Oct  6 14:58 syn_top1000.gnmap
+-rw-rw-r-- 1 mg mg  487 Oct  6 14:58 syn_top1000.nmap
+-rw-rw-r-- 1 mg mg 9507 Oct  6 14:58 syn_top1000.xml
+-rw-rw-r-- 1 mg mg   11 Oct  6 14:56 t0
+
+==================================================================
+ LABORATORIO 03 - FIN  2026-10-06T14:58:56-04:00
+==================================================================
+
+Script done on 2026-10-06 14:58:56-04:00 [COMMAND_EXIT_CODE="0"]

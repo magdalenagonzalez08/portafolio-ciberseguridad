@@ -1,0 +1,18 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:26:39 2026 as: /usr/lib/nmap/nmap --privileged --script ssl-cert -p 8443 -oA /home/mg/evidencias/lab05/ssl_cert 192.168.56.103
+Nmap scan report for 192.168.56.103
+Host is up (0.000096s latency).
+
+PORT     STATE SERVICE
+8443/tcp open  https-alt
+| ssl-cert: Subject: commonName=lab.magalena.local/organizationName=Laboratorio academico local/countryName=PA
+| Issuer: commonName=lab.magalena.local/organizationName=Laboratorio academico local/countryName=PA
+| Public Key type: rsa
+| Public Key bits: 2048
+| Signature Algorithm: sha256WithRSAEncryption
+| Not valid before: 2026-10-06T18:31:13
+| Not valid after:  2026-11-05T18:31:13
+| MD5:     42fd f0ef 2040 c09b 1d2d ee99 e7d5 3c29
+| SHA-1:   4fe4 de55 576d 2c2d fc96 b1ed 23a9 e16a 62f3 53dc
+|_SHA-256: a89d a637 4a97 b53d 1d94 33fc 23d5 e5c3 a2e4 2401 2147 fb2c 5385 7dcb 00d1 8f06
+
+# Nmap done at Tue Oct  6 15:26:44 2026 -- 1 IP address (1 host up) scanned in 5.07 seconds

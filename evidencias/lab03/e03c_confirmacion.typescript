@@ -1,0 +1,66 @@
+Script started on 2026-10-06 15:03:25-04:00 [COMMAND="bash ~/labenv/scripts/lab03c_confirmacion.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 03 (c)   2026-10-06T15:03:25-04:00
+==================================================================
+
+--- [A] Interfaz de captura declarada por nmap (-d) -----------------
+$ nmap -sS -p 22 -d 192.168.56.103 2>&1 | grep -i 'capture filter'
+Packet capture filter (device lo): dst host 192.168.56.103 and (icmp or icmp6 or ((tcp or udp or sctp) and (src host 192.168.56.103)))
+
+$ nmap -sS -p 22 -d 127.0.0.1 2>&1 | grep -i 'capture filter'
+Packet capture filter (device lo): dst host 127.0.0.1 and (icmp or icmp6 or ((tcp or udp or sctp) and (src host 127.0.0.1)))
+
+--- [B] Resolucion de ruta y direcciones implicadas -----------------
+$ ip route get 192.168.56.103
+local [1;35m192.168.56.103 [0mdev [1;36mlo [0msrc [1;35m192.168.56.103 [0muid 1001 
+    cache <local> 
+$ ip route get 127.0.0.1
+local [1;35m127.0.0.1 [0mdev [1;36mlo [0msrc [1;35m127.0.0.1 [0muid 1001 
+    cache <local> 
+
+--- [C] Registro completo del sistema durante cada prueba -----------
+Metodo: marca de tiempo, ejecucion, despues se leen SOLO los eventos
+        posteriores a la marca.
+
+$ nmap -sS -p 22 --max-retries 1 -oN /dev/null 192.168.56.103
+Nmap done: 1 IP address (1 host up) scanned in 0.66 seconds
+Eventos del sistema posteriores a la marca (SYN):
+-- No entries --
+  total de eventos desde la marca tras SYN: 1
+
+$ nmap -sT -p 22 --max-retries 1 -oN /dev/null 192.168.56.103
+Nmap done: 1 IP address (1 host up) scanned in 4.63 seconds
+Eventos del sistema posteriores a la marca (connect):
+-- No entries --
+  total de eventos desde la marca tras connect: 1
+
+--- [D] Prueba de referencia con una conexion hecha a mano ----------
+Si una conexion TCP normal deja registro y el escaneo -sT no,
+entonces el metodo de lectura esta mal y hay que corregirlo.
+$ timeout 2 bash -c 'exec 3<>/dev/tcp/192.168.56.103/22'  (conexion real)
+  conexion abierta y cerrada
+Oct 06 15:03:37 magdalena sshd-session[40789]: Connection closed by 192.168.56.103 port 38258 [preauth]
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.1310] device (eth1): state change: ip-config -> failed (reason 'ip-config-unavailable', managed-type: 'full')
+Oct 06 15:03:38 magdalena NetworkManager[638]: <warn>  [1791313418.1317] device (eth1): Activation: failed for connection 'Wired connection 2'
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.1318] device (eth1): state change: failed -> disconnected (reason 'none', managed-type: 'full')
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2031] dhcp4 (eth1): canceled DHCP transaction
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2034] dhcp4 (eth1): activation: beginning transaction (timeout in 45 seconds)
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2034] dhcp4 (eth1): state changed no lease
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2078] policy: auto-activating connection 'Wired connection 2' (930a404e-9915-3c97-9f16-4c0b7875f171)
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2111] device (eth1): Activation: starting connection 'Wired connection 2' (930a404e-9915-3c97-9f16-4c0b7875f171)
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2113] device (eth1): state change: disconnected -> prepare (reason 'none', managed-type: 'full')
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2115] device (eth1): state change: prepare -> config (reason 'none', managed-type: 'full')
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2323] device (eth1): state change: config -> ip-config (reason 'none', managed-type: 'full')
+Oct 06 15:03:38 magdalena NetworkManager[638]: <info>  [1791313418.2758] dhcp4 (eth1): activation: beginning transaction (timeout in 45 seconds)
+  total de eventos desde la marca tras conexion manual: 13
+
+--- [E] Resumen de eventos por prueba --------------------------------
+  SYN   (nmap -sS) ............ 1 eventos nuevos
+  connect (nmap -sT) .......... 1 eventos nuevos
+  conexion manual (bash) ...... 13 eventos nuevos
+
+==================================================================
+ FIN 2026-10-06T15:03:39-04:00
+==================================================================
+
+Script done on 2026-10-06 15:03:39-04:00 [COMMAND_EXIT_CODE="0"]

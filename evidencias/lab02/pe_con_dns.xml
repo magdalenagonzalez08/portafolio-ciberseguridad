@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 15:41:11 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sn -PE -oA /home/mg/evidencias/lab02/pe_con_dns 192.168.56.103 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PE -oA /home/mg/evidencias/lab02/pe_con_dns 192.168.56.103" start="1791315671" startstr="Tue Oct  6 15:41:11 2026" version="7.99" xmloutputversion="1.05">
+<verbose level="0"/>
+<debugging level="0"/>
+<taskprogress task="Parallel DNS resolution of 1 host." time="1791315671" percent="0.00"/>
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.56.103" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</host>
+<runstats><finished time="1791315674" timestr="Tue Oct  6 15:41:14 2026" summary="Nmap done at Tue Oct  6 15:41:14 2026; 1 IP address (1 host up) scanned in 3.62 seconds" elapsed="3.62" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

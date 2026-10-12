@@ -1,0 +1,64 @@
+Script started on 2026-10-06 14:29:35-04:00 [COMMAND="bash ~/probe_syn.sh" <not executed on terminal>]
+### [1] Capacidades efectivas de la sesion actual
+$ grep Cap /proc/self/status
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	000001ffffffffff
+CapAmb:	0000000000000000
+Referencia: CAP_NET_RAW es el bit 13 (valor 0x2000).
+CapEff = 0x0
+CAP_NET_RAW (bit 13) activo: False
+CAP_NET_ADMIN (bit 12) activo: False
+
+### [2] Binario nmap: tipo, permisos, capacidades de archivo
+-rwxr-xr-x 1 root root 165 Apr  9 05:18 /usr/bin/nmap
+/usr/bin/nmap: a sh script, ASCII text executable
+--- getcap -v /usr/bin/nmap ---
+/usr/bin/nmap
+
+### [3] Conteo de paquetes crudos: -sS frente a -sT (misma condicion)
+$ nmap -sS -p 22,21 127.0.0.1 -oG - 
+Nmap done: 1 IP address (1 host up) scanned in 0.16 seconds
+           Raw packets sent: 2 (88B) | Rcvd: 5 (216B)
+$ nmap -sT -p 22,21 127.0.0.1 -v
+           Raw packets sent: 0 (0B) | Rcvd: 0 (0B)
+
+### [4] Debug nmap -sS (-d): apertura de socket / motivo de error
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:29 -0400
+--------------- Timing report ---------------
+  hostgroups: min 1, max 100000
+  rtt-timeouts: init 1000, min 100, max 10000
+  max-scan-delay: TCP 1000, UDP 1000, SCTP 1000
+  parallelism: min 0, max 0
+  max-retries: 10, host-timeout: 0
+  min-rate: 0, max-rate: 0
+---------------------------------------------
+mass_dns: Using DNS server 192.168.18.2
+Initiating SYN Stealth Scan at 14:29
+Scanning localhost (127.0.0.1) [1 port]
+Packet capture filter (device lo): dst host 127.0.0.1 and (icmp or icmp6 or ((tcp or udp or sctp) and (src host 127.0.0.1)))
+Discovered open port 22/tcp on 127.0.0.1
+Completed SYN Stealth Scan at 14:29, 0.04s elapsed (1 total ports)
+Overall sending rates: 23.23 packets / s, 1022.11 bytes / s.
+Nmap scan report for localhost (127.0.0.1)
+Host is up, received localhost-response (0.00011s latency).
+Scanned at 2026-10-06 14:29:36 EDT for 0s
+
+PORT   STATE SERVICE REASON
+22/tcp open  ssh     syn-ack ttl 64
+Final times for host: srtt: 111 rttvar: 5000  to: 100000
+
+Read from /usr/share/nmap: nmap-protocols nmap-services.
+Nmap done: 1 IP address (1 host up) scanned in 0.25 seconds
+           Raw packets sent: 1 (44B) | Rcvd: 2 (88B)
+
+### [5] Resumen nmap done -sS
+Not shown: 1022 closed tcp ports (reset)
+PORT   STATE SERVICE
+21/tcp open  ftp
+22/tcp open  ssh
+
+Nmap done: 1 IP address (1 host up) scanned in 0.27 seconds
+
+Script done on 2026-10-06 14:29:37-04:00 [COMMAND_EXIT_CODE="0"]

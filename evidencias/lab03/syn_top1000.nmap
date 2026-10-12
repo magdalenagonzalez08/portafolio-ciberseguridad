@@ -1,0 +1,11 @@
+# Nmap 7.99 scan initiated Tue Oct  6 14:58:41 2026 as: /usr/lib/nmap/nmap --privileged -sS --top-ports 1000 -oA /home/mg/evidencias/lab03/syn_top1000 192.168.56.103
+Nmap scan report for 192.168.56.103
+Host is up (0.000063s latency).
+Not shown: 996 filtered tcp ports (no-response)
+PORT     STATE SERVICE
+21/tcp   open  ftp
+22/tcp   open  ssh
+8080/tcp open  http-proxy
+8443/tcp open  https-alt
+
+# Nmap done at Tue Oct  6 14:58:51 2026 -- 1 IP address (1 host up) scanned in 9.97 seconds

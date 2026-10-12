@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 15:26:45 2026 as: /usr/lib/nmap/nmap -&#45;privileged -&#45;script http-title,http-headers,http-server-header -p 8080 -oA /home/mg/evidencias/lab05/http 192.168.56.103 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -&#45;script http-title,http-headers,http-server-header -p 8080 -oA /home/mg/evidencias/lab05/http 192.168.56.103" start="1791314805" startstr="Tue Oct  6 15:26:45 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="1" services="8080"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1791314808" endtime="1791314808"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.56.103" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="8080"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="http-proxy" product="SimpleHTTP/0.6 Python/3.13.14" method="probed" conf="10"/><script id="http-headers" output="&#xa;  Server: SimpleHTTP/0.6 Python/3.13.14&#xa;  Date: Tue, 06 Oct 2026 19:26:48 GMT&#xa;  Content-type: text/html; charset=utf-8&#xa;  Content-Length: 386&#xa;  &#xa;  (Request type: HEAD)&#xa;"/><script id="http-server-header" output="SimpleHTTP/0.6 Python/3.13.14"><elem>SimpleHTTP/0.6 Python/3.13.14</elem>
+</script><script id="http-title" output="Directory listing for /"><elem key="title">Directory listing for /</elem>
+</script></port>
+</ports>
+<times srtt="243" rttvar="5000" to="100000"/>
+</host>
+<runstats><finished time="1791314808" timestr="Tue Oct  6 15:26:48 2026" summary="Nmap done at Tue Oct  6 15:26:48 2026; 1 IP address (1 host up) scanned in 3.65 seconds" elapsed="3.65" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

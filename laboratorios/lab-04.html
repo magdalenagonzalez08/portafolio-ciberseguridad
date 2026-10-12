@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio 04 · Servicios y sistema operativo | Portafolio de ciberseguridad</title>
+<meta name="description" content="Laboratorio 04: obtención de banners, identificación de versiones con Nmap -sV y detección de sistema operativo, incluyendo el puerto que la herramienta no logra identificar.">
+<script>
+(function(){try{var t=localStorage.getItem("tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Portafolio de <span>laboratorios</span></a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="../index.html#proyecto">Proyecto</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../index.html#metodologia">Metodología</a>
+      <a href="../index.html#recursos">Recursos</a>
+        <button class="theme-toggle" type="button" aria-label="Cambiar tema">☾</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Laboratorio 04 de 06 · Estado completado</p>
+      <h1>Servicios y sistema operativo</h1>
+      <p class="lede">Qué responde cada puerto abierto, cuánta versión puede determinarse con precisión y dónde termina el alcance de la herramienta. El puerto 8443 devuelve datos y Nmap no consigue nombrarlo, y ese fallo se documenta igual de cuidadosamente que los aciertos.</p>
+    </div>
+  </div>
+
+  <div class="wrap section">
+
+    <nav class="toc" aria-label="Índice del informe">
+      <h2>Índice del informe</h2>
+      <ol>
+        <li><a href="#s1">Resumen para selección</a></li>
+        <li><a href="#s2">Objetivo técnico</a></li>
+        <li><a href="#s3">Entorno y alcance</a></li>
+        <li><a href="#s4">Conocimientos previos</a></li>
+        <li><a href="#s5">Procedimiento reproducible</a></li>
+        <li><a href="#s6">Comandos y opciones</a></li>
+        <li><a href="#s7">Resultados observados</a></li>
+        <li><a href="#s8">Evidencias vinculadas</a></li>
+        <li><a href="#s9">Interpretación técnica</a></li>
+        <li><a href="#s10">Implicación defensiva</a></li>
+        <li><a href="#s11">Errores y limitaciones</a></li>
+        <li><a href="#s12">Conclusión</a></li>
+        <li><a href="#s13">Preguntas de entrevista</a></li>
+        <li><a href="#s14">Referencias</a></li>
+      </ol>
+    </nav>
+
+<section id="s1">
+      <h2>1. Resumen para una persona de selección</h2>
+      <p>Con el inventario de puertos ya cerrado en los laboratorios anteriores, este trabajo se concentra en una pregunta distinta. No es qué puertos están abiertos, sino <strong>qué está respondiendo en cada uno y con cuánta confianza puede afirmarse</strong>.</p>
+      <p>Se atacó por dos vías. La primera fue leer la respuesta que cada servicio entrega por sí mismo, sin ninguna interpretación de la herramienta. La segunda fue dejar que Nmap determine versión y sistema operativo con su motor de identificación. Los resultados coinciden en tres de cuatro puertos y divergen en el cuarto, que es justo donde aparece lo interesante.</p>
+      <div class="note">
+        <span class="tag">Naturaleza del trabajo</span>
+        <p>Laboratorio académico sobre una máquina virtual propia, ejecutado por acceso SSH. El objetivo autorizado sigue siendo <code>192.168.56.103</code>. No hay experiencia profesional, clientes ni certificaciones involucradas.</p>
+      </div>
+    </section>
+
+<section id="s2">
+      <h2>2. Objetivo técnico</h2>
+      <p>Obtener la identificación de servicio de los cuatro puertos abiertos por dos caminos independientes, comparar ambos resultados y dejar documentado con precisión el punto donde la herramienta deja de poder afirmar.</p>
+      <ul>
+        <li>Leer el banner o las cabeceras que cada servicio entrega sin intermediarios.</li>
+        <li>Determinar versión con <code>-sV</code> y el máximo nivel de intensidad.</li>
+        <li>Intentar identificar el sistema operativo del equipo.</li>
+        <li>Registrar explícitamente los puertos que no logran identificarse y el motivo observable.</li>
+      </ul>
+    </section>
+
+<section id="s3">
+      <h2>3. Entorno y alcance</h2>
+      <p>Se reutiliza sin modificaciones la línea base de los laboratorios 01 a 03. Máquina Kali Linux 2026.3 en VirtualBox, usuario <code>mg</code>, Nmap <code>7.99</code>, objetivo autorizado <code>192.168.56.103</code> más el bucle de trabajo <code>127.0.0.1</code>.</p>
+
+      <div class="pending">
+        <span class="tag">Alcance autorizado</span>
+        <p>Único objetivo <code>192.168.56.103</code> y su interfaz de bucle. Todas las pruebas de este laboratorio son de lectura, ninguna modifica el equipo.</p>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Fuera de alcance</span>
+        <p>El anfitrión Windows, la pasarela NAT, el resto de la subred host-only y cualquier red externa. No se realizó fuerza bruta, ni explotación, ni denegación de servicio.</p>
+      </div>
+
+      <h3>3.1 Servicios que se esperaban encontrar</h3>
+      <p>El Laboratorio 01 ya había inventariado cuatro puertos en escucha. Este trabajo parte de ese listado y no abre ninguno nuevo.</p>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 1. Puertos abiertos heredados del inventario inicial.</caption>
+          <thead>
+            <tr><th>Puerto</th><th>Servicio declarado por el sistema</th><th>Origen</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>21/tcp</code></td><td><code>vsftpd</code></td><td>Del sistema, corriendo como raíz</td></tr>
+            <tr><td><code>22/tcp</code></td><td><code>sshd</code></td><td>Del sistema, corriendo como raíz</td></tr>
+            <tr><td><code>8080/tcp</code></td><td><code>python3</code></td><td>Añadido para el laboratorio</td></tr>
+            <tr><td><code>8443/tcp</code></td><td><code>openssl</code></td><td>Añadido para el laboratorio</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+<section id="s4">
+      <h2>4. Conocimientos previos</h2>
+      <p>Antes de ejecutar nada conviene distinguir tres conceptos que este laboratorio pone a prueba por separado.</p>
+      <ul>
+        <li><strong>Banner.</strong> Texto que el servidor manda por su cuenta apenas se conecta el cliente. FTP y SSH lo hacen, HTTP lo entrega solo si se le pide.</li>
+        <li><strong>Identificación de versión.</strong> Nmap envía estímulos al servicio y compara la respuesta con una base de datos de firmas. El nivel de intensidad decide cuántos estímulos intenta.</li>
+        <li><strong>Detección de sistema operativo.</strong> Aprovecha particularidades del protocolo TCP, como el orden de los campos y el tamaño de la ventana, para adivinar el kernel.</li>
+      </ul>
+      <p>La distinción importa porque las tres pueden fallar de formas distintas y una herramienta que no identifica un servicio no está fallando, está informando.</p>
+    </section>
+
+<section id="s5">
+      <h2>5. Procedimiento reproducible</h2>
+      <p>Cinco ejecuciones, cada una guardada en su propio archivo para poder auditarlas por separado.</p>
+      <ol>
+        <li>Leer el banner crudo de FTP y de SSH con una conexión TCP directa, sin herramienta de escaneo de por medio.</li>
+        <li>Pedir las cabeceras HTTP al puerto 8080 con <code>curl</code>.</li>
+        <li>Leer el certificado del puerto 8443 con <code>openssl s_client</code>.</li>
+        <li>Ejecutar <code>-sV</code> con intensidad máxima sobre los cuatro puertos.</li>
+        <li>Ejecutar <code>-O</code> para detección de sistema operativo, sola y combinada con <code>-sV</code>.</li>
+      </ol>
+      <p>Todas las ejecuciones quedaron registradas con <code>script</code> en <code>evidencias/lab04/e04_servicios_so.typescript</code>.</p>
+    </section>
+
+<section id="s6">
+      <h2>6. Comandos exactos y explicación de sus opciones</h2>
+
+      <div class="evidence">
+        <div class="evidence-head"><span>lectura directa de banners</span><span>sin herramienta de escaneo</span></div>
+        <pre><code>$ timeout 4 bash -c 'exec 3&lt;&gt;/dev/tcp/192.168.56.103/21; head -1 &lt;&amp;3'
+220 (vsFTPd 3.0.5)
+
+$ timeout 4 bash -c 'exec 3&lt;&gt;/dev/tcp/192.168.56.103/22; head -1 &lt;&amp;3'
+SSH-2.0-OpenSSH_10.4p1 Debian-4
+
+$ curl -sSI --max-time 5 http://192.168.56.103:8080/
+
+$ timeout 6 openssl s_client -connect 192.168.56.103:8443 -showcerts &lt;/dev/null \
+    2&gt;/dev/null | openssl x509 -noout -subject -issuer -dates</code></pre>
+        <figcaption><strong>Opciones.</strong> <code>/dev/tcp</code> es una extensión de Bash que convierte una ruta en un descriptor de archivo, de modo que la conexión TCP se abre sin instalar nada. <code>timeout</code> evita que la sesión se quede colgada si el servicio no contesta. <code>curl -sSI</code> pide solo las cabeceras con una petición <code>HEAD</code>. <code>-showcerts</code> fuerza a que se entregue el certificado, y <code>-noout</code> en el segundo <code>openssl</code> evita imprimir el cuerpo del PEM.</figcaption>
+      </div>
+
+      <div class="evidence">
+        <div class="evidence-head"><span>identificación de servicios</span><span>Nmap 7.99</span></div>
+        <pre><code>$ nmap -sV --version-intensity 7 -p 21,22,8080,8443 --reason \
+    -oA /home/mg/evidencias/lab04/servicios 192.168.56.103</code></pre>
+        <figcaption><strong>Opciones.</strong> <code>-sV</code> activa el motor de identificación de versiones. <code>--version-intensity 7</code> es el máximo permitido, hace que Nmap agote la lista de estímulos disponibles para el servicio antes de rendirse. <code>-p</code> limita la prueba a los cuatro puertos abiertos conocidos y así evita pagar el coste de un barrido completo. <code>--reason</code> añade el motivo por el que se clasificó cada puerto.</figcaption>
+      </div>
+
+      <div class="evidence">
+        <div class="evidence-head"><span>detección de sistema operativo</span><span>Nmap 7.99</span></div>
+        <pre><code>$ nmap -O --reason -p 1-100 -oA /home/mg/evidencias/lab04/os_target 192.168.56.103
+$ nmap -sV -O --version-intensity 5 -p 21,22,8080,8443 \
+    -oA /home/mg/evidencias/lab04/servicios_y_so 192.168.56.103</code></pre>
+        <figcaption><strong>Opciones.</strong> <code>-O</code> necesita al menos un puerto abierto y uno cerrado para comparar respuestas. Por eso se le pasó una franja en lugar de solo los puertos conocidos. En la segunda ejecución se bajó la intensidad a 5 para que la prueba conjunta no se volviera demasiado larga.</figcaption>
+      </div>
+    </section>
+
+<section id="s7">
+      <h2>7. Resultados observados</h2>
+
+      <h3>7.1 Lo que cada servicio dice por sí mismo</h3>
+      <p>La vía más honesta es preguntarle al servicio y no a una base de firmas. FTP y SSH entregan su identidad apenas se conecta el cliente, sin que nadie lo pida.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab04/e04_servicios_so.typescript</span>
+          <span>secciones [4.1] a [4.4]</span>
+        </div>
+        <pre><code>220 (vsFTPd 3.0.5)
+SSH-2.0-OpenSSH_10.4p1 Debian-4
+
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.13.14
+Date: Tue, 06 Oct 2026 19:12:06 GMT
+Content-type: text/html; charset=utf-8
+Content-Length: 386
+
+subject=CN=lab.magalena.local, O=Laboratorio academico local, C=PA
+issuer=CN=lab.magalena.local, O=Laboratorio academico local, C=PA
+notBefore=Oct  6 18:31:13 2026 GMT
+notAfter=Nov  5 18:31:13 2026 GMT</code></pre>
+        <figcaption><strong>Figura 1.</strong> Respuesta que entrega cada servicio sin intermediarios. Evidencia completa en <code>e04_servicios_so.typescript</code>.</figcaption>
+      </figure>
+
+      <p>Tres detalles merecen atención. El banner de FTP incluye el nombre entre paréntesis, lo cual es habitual en configuraciones por defecto de <code>vsftpd</code>. El identificador del servidor HTTP revela <strong>lenguaje, versión del servidor y versión del intérprete</strong>, tres datos en una sola cabecera. Y el certificado del 8443 está firmado a sí mismo, con el mismo nombre en emisor y en sujeto, válido solo un mes.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab04-banners.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab04-banners.png" alt="Pantalla con las respuestas observadas de cada servicio">
+        <figcaption><strong>Captura 1.</strong> Banners de FTP y de SSH leídos con una conexión directa, cabeceras HTTP pedidas con <code>curl</code> y datos del certificado leídos con <code>openssl</code>.</figcaption>
+      </figure>
+
+      <h3>7.2 Identificación con el motor de Nmap</h3>
+      <p>Con intensidad máxima el motor identificó tres de los cuatro servicios y coincidió exactamente con lo que los propios servicios habían declarado.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab04/servicios.nmap</span>
+          <span>-sV --version-intensity 7</span>
+        </div>
+        <pre><code>PORT     STATE SERVICE       REASON         VERSION
+21/tcp   open  ftp           syn-ack ttl 64 vsftpd 3.0.5
+22/tcp   open  ssh           syn-ack ttl 64 OpenSSH 10.4p1 Debian 4 (protocol 2.0)
+8080/tcp open  http          syn-ack ttl 64 SimpleHTTPServer 0.6 (Python 3.13.14)
+8443/tcp open  ssl/https-alt syn-ack ttl 64
+1 service unrecognized despite returning data.</code></pre>
+        <figcaption><strong>Figura 2.</strong> Salida del motor de identificación. La última línea del bloque es la del puerto que no se pudo nombrar.</figcaption>
+      </figure>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab04-versiones.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab04-versiones.png" alt="Pantalla con la identificacion de servicios con -sV">
+        <figcaption><strong>Captura 2.</strong> Resultado de <code>-sV</code> con intensidad máxima y la huella que Nmap ofrece enviar a su base de datos porque no consiguió clasificar el puerto 8443.</figcaption>
+      </figure>
+
+      <p>El texto completo del aviso dice <em>1 service unrecognized despite returning data</em>. Nmap no dice que el puerto esté vacío, dice que <strong>recibió datos y no los reconoció</strong>. En el mismo bloque aparece la huella completa de la respuesta, lista para enviarse a <code>nmap.org/cgi-bin/submit.cgi?new-service</code>.</p>
+
+      <p>Al leer esa huella aparece la explicación. El servicio del 8443 es un <code>openssl s_server</code> lanzado con <code>-www</code>, y lo que devuelve es una página HTML con la lista de cifrados soportados. Nmap espera una respuesta TLS estándar y recibe una página web embebida dentro del canal cifrado, algo que su base de firmas no contempla.</p>
+
+      <h3>7.3 Detección de sistema operativo</h3>
+      <p>La detección de sistema operativo fue la que peores resultados dio, y el propio Nmap explica por qué.</p>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab04/os_target.nmap</span>
+          <span>-O --reason -p 1-100</span>
+        </div>
+        <pre><code>Warning: OSScan results may be unreliable because we could not
+find at least 1 open and 1 closed port
+Aggressive OS guesses: Linux 2.6.32 (96%), Linux 5.0 - 6.2 (96%),
+Linux 6.8 (96%), Linux 5.9 (95%), Linux 3.7 - 4.19 (91%),
+Linux 5.10 - 5.11 (91%), Linux 5.4 - 5.15 (91%), Linux 6.6 (91%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 0 hops</code></pre>
+        <figcaption><strong>Figura 3.</strong> Resultado de la detección de sistema operativo, con el aviso de fiabilidad y la lista de conjeturas.</figcaption>
+      </figure>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab04-so.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab04-so.png" alt="Pantalla con la deteccion de sistema operativo">
+        <figcaption><strong>Captura 3.</strong> Aviso de fiabilidad, conjeturas agresivas y la declaración de que no hay coincidencia exacta.</figcaption>
+      </figure>
+
+      <p>Cuatro observaciones sobre esta salida. Todas las conjeturas apuntan a <strong>Linux</strong>, con lo cual el objetivo queda acotado correctamente. El porcentaje más alto es 96 % y se repite en tres kernels distintos, lo cual significa que la firma no discrimina entre versiones. El aviso explica que faltó un puerto cerrado para comparar, porque el barrido de 1 a 100 solo encontró abiertos el 21 y el 22, y el resto quedó filtrado. Y <code>Network Distance: 0 hops</code> confirma desde otra fuente lo que el Laboratorio 01 ya había demostrado, que el escaneo es local.</p>
+
+      <h3>7.4 Prueba combinada</h3>
+      <p>La última ejecución juntó <code>-sV</code> y <code>-O</code> en un solo pase, con intensidad moderada. Devolvió las mismas versiones en los tres puertos identificables, lo cual confirma que los dos motores no interfieren entre sí.</p>
+    </section>
+
+<section id="s8">
+      <h2>8. Evidencias vinculadas</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 2. Archivos de evidencia del Laboratorio 04.</caption>
+          <thead>
+            <tr><th>Archivo</th><th>Contenido</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>e04_servicios_so.typescript</code></td><td>Transcripción completa de las cinco ejecuciones, con banners, identificación y detección de sistema operativo</td></tr>
+            <tr><td><code>servicios.nmap</code> y anexos</td><td>Salida normal, XML y grepable de <code>-sV</code> con intensidad máxima</td></tr>
+            <tr><td><code>os_target.nmap</code> y anexos</td><td>Salida de la detección de sistema operativo</td></tr>
+            <tr><td><code>servicios_y_so.nmap</code> y anexos</td><td>Salida de la prueba combinada de servicios y sistema operativo</td></tr>
+            <tr><td><code>lab04-banners.png</code></td><td>Captura de las respuestas observadas de cada servicio</td></tr>
+            <tr><td><code>lab04-versiones.png</code></td><td>Captura de la identificación con <code>-sV</code></td></tr>
+            <tr><td><code>lab04-so.png</code></td><td>Captura de la detección de sistema operativo</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Los archivos con extensión <code>.xml</code> son la fuente primaria cuando hace falta leer el detalle de la huella, porque la salida en pantalla trunca el bloque <code>SF-Port8443-TCP</code>.</p>
+    </section>
+
+<section id="s9">
+      <h2>9. Interpretación técnica</h2>
+
+      <p><strong>Evidencia.</strong> Los banners de FTP y de SSH coinciden exactamente con lo que <code>-sV</code> informa, <code>vsftpd 3.0.5</code> y <code>OpenSSH 10.4p1 Debian 4</code>.</p>
+      <p><strong>Interpretación.</strong> Cuando el servicio entrega la versión por su propia cuenta, la identificación deja de ser una deducción y pasa a ser una lectura. El motor de firmas solo confirma lo que ya estaba a la vista. En un informe real conviene citar el banner como fuente primaria y la herramienta como confirmación.</p>
+
+      <p><strong>Evidencia.</strong> El puerto 8080 declaró <code>Server: SimpleHTTP/0.6 Python/3.13.14</code> en las cabeceras, y <code>-sV</code> informó <code>SimpleHTTPServer 0.6 (Python 3.13.14)</code>.</p>
+      <p><strong>Interpretación.</strong> La cabecera <code>Server</code> es un vector de información directo. Cualquier cliente HTTP la recibe sin autenticación. En este caso revela que detrás del puerto hay un servidor de desarrollo de Python y no un servidor de producción, dato que cambia por completo la valoración del riesgo.</p>
+
+      <p><strong>Evidencia.</strong> El puerto 8443 devolvió datos y Nmap informó <em>unrecognized despite returning data</em>, con la huella completa disponible para envío.</p>
+      <p><strong>Interpretación.</strong> No se trata de un fallo. La herramienta separa dos situaciones muy distintas, un puerto que no responde y un puerto que responde con algo desconocido, y elige informar en lugar de conjeturar. La huella contiene <code>s_server -accept 8443 -cert /home/mg/labenv/lab.crt -key /home/mg/labenv/lab.key -www</code>, lo cual confirma el origen del servicio y confirma también que <strong>las rutas de la clave privada quedan expuestas en la respuesta</strong>.</p>
+
+      <p><strong>Evidencia.</strong> La detección de sistema operativo no produjo coincidencia exacta, con el aviso de que faltó un puerto cerrado.</p>
+      <p><strong>Interpretación.</strong> El método compara un puerto abierto con uno cerrado. En este equipo la franja 1 a 100 solo devolvió dos abiertos y 98 filtrados, sin ninguno cerrado, así que la comparación no pudo completarse. El problema no es del objetivo sino de la elección de la franja.</p>
+
+      <p><strong>Evidencia.</strong> El certificado del 8443 tiene el mismo nombre en emisor y sujeto, es de 2048 bits con firma SHA-256 y vence un mes después de emitirse.</p>
+      <p><strong>Interpretación.</strong> Es un certificado autofirmado generado para el laboratorio. Que sea de un solo mes es una buena práctica incluso en pruebas, porque evita que queden credenciales caducadas arrastrándose por el repositorio.</p>
+    </section>
+
+<section id="s10">
+      <h2>10. Implicación defensiva y recomendaciones</h2>
+      <p>Lo que este laboratorio deja claro es que la identificación de servicios es, antes que nada, una <strong>gestión del nivel de confianza</strong>.</p>
+      <ul>
+        <li>Una versión confirmada por el propio banner admite búsqueda de vulnerabilidades directa. Una versión deducida por firma debe tratarse como hipótesis.</li>
+        <li>La cabecera <code>Server</code> de HTTP entrega lenguaje y versión a cualquiera. En un servicio real debería suprimirse o reducirse a un valor genérico.</li>
+        <li>Un <code>openssl s_server</code> en producción con <code>-www</code> publica la lista de cifrados y las rutas de los ficheros de certificado. Es un patrón de laboratorio, no de despliegue.</li>
+        <li>Un certificado autofirmado no es una vulnerabilidad, pero en un servicio accesible desde fuera sí lo es la falta de revocación y la ausencia de una autoridad de confianza.</li>
+        <li>La detección de sistema operativo da conjeturas, no hechos. Presentar un 96 % como si fuera una certificación sería incorrecto.</li>
+      </ul>
+      <div class="note">
+        <span class="tag">Lectura defensiva</span>
+        <p>El valor de este informe no es saber qué versión corre cada puerto. Es poder explicar <strong>cuándo se puede afirmar algo y cuándo no</strong>, y qué evidencia sostiene cada afirmación.</p>
+      </div>
+    </section>
+
+<section id="s11">
+      <h2>11. Errores, limitaciones y puntos pendientes</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 3. Limitaciones declaradas del Laboratorio 04.</caption>
+          <thead>
+            <tr><th>#</th><th>Limitación</th><th>Impacto</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>L1</td>
+              <td>El puerto 8443 no logra identificarse con <code>-sV</code></td>
+              <td>No puede confirmarse la versión exacta del servicio TLS por la vía del escáner</td>
+              <td>Documentado, con huella disponible</td>
+            </tr>
+            <tr>
+              <td>L2</td>
+              <td>La detección de sistema operativo no dio coincidencia exacta</td>
+              <td>Solo hay conjeturas, ninguna admite citarse como resultado</td>
+              <td>Documentado, con el motivo declarado por la herramienta</td>
+            </tr>
+            <tr>
+              <td>L3</td>
+              <td>No se comparó el banner con la base de datos de vulnerabilidades</td>
+              <td>No se puede afirmar si las versiones encontradas son vulnerables</td>
+              <td>Fuera del alcance de este laboratorio</td>
+            </tr>
+            <tr>
+              <td>L4</td>
+              <td>La intensidad máxima no garantiza identificación</td>
+              <td>Conviene no presentar <code>--version-intensity 7</code> como una garantía</td>
+              <td>Aprendido y registrado</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Los puntos pendientes se dejan escritos. Enviar la huella del 8443 a la base de datos pública de Nmap es una contribución posible, pero requiere autorización y no aporta valor a un laboratorio propio.</p>
+    </section>
+
+<section id="s12">
+      <h2>12. Conclusión</h2>
+      <p>El laboratorio identificó con exactitud tres de los cuatro puertos abiertos y dejó debidamente documentado el cuarto. Las dos vías de identificación, la lectura directa del servicio y el motor de firmas de Nmap, coincidieron en los tres casos.</p>
+      <p>El resultado más útil no es el inventario de versiones. Es la constatación de que <strong>una herramienta que no identifica un servicio puede estar dándole la razón al usuario</strong>. Nmap separó con claridad entre no responder y responder con algo desconocido, entregó la huella y se abstuvo de inventar una respuesta.</p>
+      <p>El mismo criterio se aplica a la detección de sistema operativo. Tres conjeturas con 96 % de probabilidad no son un resultado, y el propio informe lo dice. Saber cuándo una herramienta está conjeturando es tan importante como saber leer cuando acierta.</p>
+    </section>
+
+<section id="s13">
+      <h2>13. Preguntas de entrevista sobre esta práctica</h2>
+      <ol>
+        <li><strong>¿Qué diferencia hay entre un banner y la identificación con <code>-sV</code>?</strong> El banner lo entrega el servicio por su cuenta y es una fuente primaria. La identificación con <code>-sV</code> es una comparación de firmas y produce una hipótesis.</li>
+        <li><strong>¿Por qué el puerto 8443 no se identificó si devolvía datos?</strong> Porque la respuesta no coincide con ninguna firma registrada. El servicio devuelve una página HTML dentro del canal TLS y el motor espera una negociación estándar.</li>
+        <li><strong>¿Qué significa <em>unrecognized despite returning data</em>?</strong> Que el puerto sí respondió y que la respuesta no fue clasificada. Es información positiva, no un error.</li>
+        <li><strong>¿Por qué la detección de sistema operativo no dio resultado?</strong> El método necesita un puerto abierto y uno cerrado para comparar. La franja elegida solo produjo abiertos y filtrados.</li>
+        <li><strong>¿Qué problema de seguridad tiene la cabecera <code>Server</code> de HTTP?</strong> Revela lenguaje y versión a cualquier cliente sin necesidad de autenticación.</li>
+        <li><strong>¿Es una vulnerabilidad que el certificado sea autofirmado?</strong> Depende del contexto. En un laboratorio es correcto. En un servicio accesible públicamente sería un problema de confianza.</li>
+      </ol>
+    </section>
+
+<section id="s14">
+      <h2>14. Referencias oficiales utilizadas</h2>
+      <ul>
+        <li>Nmap Reference Guide, identificación de servicios con <code>-sV</code>. <a href="https://nmap.org/book/man-version-detection.html">nmap.org/book/man-version-detection.html</a></li>
+        <li>Nmap Reference Guide, detección de sistema operativo. <a href="https://nmap.org/book/man-os-detection.html">nmap.org/book/man-os-detection.html</a></li>
+        <li>Envío de huellas de servicios no reconocidos. <a href="https://nmap.org/submit/">nmap.org/submit</a></li>
+        <li>Proyecto vsftpd. <a href="https://security.appspot.com/vsftpd.html">security.appspot.com/vsftpd.html</a></li>
+        <li>OpenSSH, página del proyecto. <a href="https://www.openssh.com/">openssh.com</a></li>
+        <li>Documentación de <code>openssl s_client</code>. <a href="https://docs.openssl.org/master/man1/openssl-s_client/">docs.openssl.org/master/man1/openssl-s_client</a></li>
+        <li>Documentación de <code>curl</code>. <a href="https://curl.se/docs/manpage.html">curl.se/docs/manpage.html</a></li>
+        <li>Extensión <code>/dev/tcp</code> de Bash. <a href="https://www.gnu.org/software/bash/manual/html_node/Redirections.html">gnu.org/software/bash/manual</a></li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Enlaces del pie">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../pdf/informe-general.pdf">Informe general (PDF)</a>
+      <a href="../pdf/ficha-proyecto.pdf">Ficha del proyecto (PDF)</a>
+    </nav>
+    <p>Portafolio académico de laboratorios de ciberseguridad. Los resultados corresponden a ejecuciones reales sobre una máquina virtual propia. Los pendientes están marcados como tales.</p>
+    <p><a href="mailto:magdalenagonzalezcorreo@gmail.com">magdalenagonzalezcorreo@gmail.com</a> · <a href="https://www.linkedin.com/in/magdalenagonzalezpanama/?locale=es">LinkedIn de Magdalena Sarit González Bustillo</a></p>
+  </div>
+</footer>
+
+<script src="../js/main.js" defer></script>
+</body>
+</html>

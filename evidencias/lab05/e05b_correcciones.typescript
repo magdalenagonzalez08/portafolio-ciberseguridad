@@ -1,0 +1,78 @@
+Script started on 2026-10-06 15:28:43-04:00 [COMMAND="bash ~/labenv/scripts/lab05b_correcciones.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 05 (b)   2026-10-06T15:28:43-04:00
+==================================================================
+
+--- [1] banner, sintaxis corregida ---------------------------------
+El error original fue:
+  /usr/lib/nmap/nmap: unrecognized option '--script-args-timeout'
+Esa opcion no existe en nmap 7.99. El tiempo de espera se configura
+con los argumentos del propio script o simplemente no se limita.
+
+$ nmap --script banner -p 21,22 -oA /home/mg/evidencias/lab05/banner 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:28 -0400
+Stats: 0:00:00 elapsed; 0 hosts completed (0 up), 0 undergoing Host Discovery
+Parallel DNS resolution of 1 host. Timing: About 0.00% done
+Nmap scan report for 192.168.56.103
+Host is up (0.00011s latency).
+
+PORT   STATE SERVICE
+21/tcp open  ftp
+|_banner: 220 (vsFTPd 3.0.5)
+22/tcp open  ssh
+|_banner: SSH-2.0-OpenSSH_10.4p1 Debian-4
+
+Nmap done: 1 IP address (1 host up) scanned in 1.65 seconds
+
+--- [2] ftp-anon, con deteccion de servicio (-sV) -------------------
+Primero se comprueba si el script corre o no aparece en el XML.
+$ nmap --script ftp-anon -p 21 -oA /home/mg/evidencias/lab05/ftp_anon_v1 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:28 -0400
+Nmap scan report for 192.168.56.103
+Host is up (0.00010s latency).
+
+PORT   STATE SERVICE
+21/tcp open  ftp
+
+Nmap done: 1 IP address (1 host up) scanned in 3.96 seconds
+Elementos <script> en el XML:
+0
+  0 (el script no dejo salida)
+  ninguno
+
+$ nmap -sV --script ftp-anon -p 21 -oA /home/mg/evidencias/lab05/ftp_anon_v2 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:28 -0400
+Nmap scan report for 192.168.56.103
+Host is up (0.00012s latency).
+
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     vsftpd 3.0.5
+Service Info: OS: Unix
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 8.19 seconds
+Elementos <script> en el XML:
+  ninguno
+
+--- [3] Comprobacion directa del login anonimo con curl --------------
+Prueba independiente para saber si el dato del script es fiable.
+$ curl --max-time 6 --user 'anonymous:anonymous' ftp://192.168.56.103:21/
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0           00:01              0  0      0   0      0   0      0      0      0           00:02              0  0      0   0      0   0      0      0      0           00:03              0
+curl: (67) Access denied: 530
+  codigo de salida de curl: 67
+
+--- [4] Mismo intento con un usuario inexistente (control) -----------
+$ curl --max-time 6 --user 'noexiste:invalida' ftp://192.168.56.103:21/
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0           00:01              0  0      0   0      0   0      0      0      0           00:02              0  0      0   0      0   0      0      0      0           00:03              0
+curl: (67) Access denied: 530
+  codigo de salida de curl: 67
+
+==================================================================
+ FIN 2026-10-06T15:29:04-04:00
+==================================================================
+
+Script done on 2026-10-06 15:29:04-04:00 [COMMAND_EXIT_CODE="0"]

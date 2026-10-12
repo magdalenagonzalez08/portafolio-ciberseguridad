@@ -1,0 +1,14 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:15:05 2026 as: /usr/lib/nmap/nmap --privileged -O --reason -p 1-100 -oA /home/mg/evidencias/lab04/os_target 192.168.56.103
+Nmap scan report for 192.168.56.103
+Host is up, received localhost-response (0.00018s latency).
+Not shown: 98 filtered tcp ports (no-response)
+PORT   STATE SERVICE REASON
+21/tcp open  ftp     syn-ack ttl 64
+22/tcp open  ssh     syn-ack ttl 64
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Aggressive OS guesses: Linux 2.6.32 (96%), Linux 5.0 - 6.2 (96%), Linux 6.8 (96%), Linux 5.9 (95%), HP P2000 G3 NAS device (92%), Linux 3.7 - 4.19 (91%), Linux 5.10 - 5.11 (91%), Linux 5.4 - 5.15 (91%), Linux 6.6 (91%), Linux 3.8 - 3.9 (91%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 0 hops
+
+OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Tue Oct  6 15:15:16 2026 -- 1 IP address (1 host up) scanned in 11.27 seconds

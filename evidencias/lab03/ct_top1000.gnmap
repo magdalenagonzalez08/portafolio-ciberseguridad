@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Tue Oct  6 14:58:51 2026 as: /usr/lib/nmap/nmap --privileged -sT --top-ports 1000 -oA /home/mg/evidencias/lab03/ct_top1000 192.168.56.103
+Host: 192.168.56.103 ()	Status: Up
+Host: 192.168.56.103 ()	Ports: 21/open/tcp//ftp///, 22/open/tcp//ssh///, 8080/open/tcp//http-proxy///, 8443/open/tcp//https-alt///	Ignored State: closed (996)
+# Nmap done at Tue Oct  6 14:58:56 2026 -- 1 IP address (1 host up) scanned in 4.94 seconds

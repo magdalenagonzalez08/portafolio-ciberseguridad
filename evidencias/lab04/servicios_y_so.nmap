@@ -1,0 +1,57 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:15:17 2026 as: /usr/lib/nmap/nmap --privileged -sV -O --version-intensity 5 -p 21,22,8080,8443 -oA /home/mg/evidencias/lab04/servicios_y_so 192.168.56.103
+Nmap scan report for 192.168.56.103
+Host is up (0.00016s latency).
+
+PORT     STATE SERVICE        VERSION
+21/tcp   open  ftp            vsftpd 3.0.5
+22/tcp   open  ssh            OpenSSH 10.4p1 Debian 4 (protocol 2.0)
+8080/tcp open  http           SimpleHTTPServer 0.6 (Python 3.13.14)
+8443/tcp open  ssl/https-alt?
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port8443-TCP:V=7.99%T=SSL%I=5%D=10/6%Time=6AC548D6%P=x86_64-pc-linux-gn
+SF:u%r(GetRequest,28A0,"HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/ht
+SF:ml\r\n\r\n<HTML><BODY\x20BGCOLOR=\"#ffffff\">\n<pre>\n\ns_server\x20-ac
+SF:cept\x208443\x20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/l
+SF:abenv/lab\.key\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renego
+SF:tiation\.\nCiphers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x
+SF:20\x20\x20\x20:TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x
+SF:20\x20:TLS_CHACHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_A
+SF:ES_128_GCM_SHA256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-A
+SF:ES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA
+SF:384\x20TLSv1\.2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2
+SF:\x20\x20\x20\x20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:
+SF:ECDHE-ECDSA-CHACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-C
+SF:HACHA20-POLY1305\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\
+SF:x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLS
+SF:v1\.2\x20\x20\x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x2
+SF:0\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\
+SF:x20\x20\x20\x20:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\
+SF:x20:DHE-DSS-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA
+SF:256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-")%r(FourOhFourRequest
+SF:,28A0,"HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/html\r\n\r\n<HTM
+SF:L><BODY\x20BGCOLOR=\"#ffffff\">\n<pre>\n\ns_server\x20-accept\x208443\x
+SF:20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/labenv/lab\.key
+SF:\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renegotiation\.\nCip
+SF:hers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x20\x20\x20\x20
+SF::TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x20\x20:TLS_CHA
+SF:CHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_AES_128_GCM_SHA
+SF:256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-GCM-SHA3
+SF:84\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA384\x20TLSv1\.
+SF:2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x
+SF:20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-CH
+SF:ACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-CHACHA20-POLY13
+SF:05\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\x20\nTLSv1\.2\
+SF:x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLSv1\.2\x20\x20\
+SF:x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x20\nTLSv1\.2\x2
+SF:0\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x2
+SF:0:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\x20:DHE-DSS-AR
+SF:IA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA256-GCM-SHA384
+SF:\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-");
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Aggressive OS guesses: Linux 2.6.32 (96%), Linux 5.0 - 6.2 (96%), Linux 6.8 (95%), Linux 5.9 (94%), HP P2000 G3 NAS device (92%), Linux 3.7 - 4.19 (91%), Linux 3.19 - 4.4 (91%), Linux 5.10 - 5.11 (91%), Linux 5.4 - 5.15 (91%), Linux 6.6 (91%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 0 hops
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Tue Oct  6 15:16:44 2026 -- 1 IP address (1 host up) scanned in 87.29 seconds

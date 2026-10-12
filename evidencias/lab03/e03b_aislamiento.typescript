@@ -1,0 +1,107 @@
+Script started on 2026-10-06 15:01:37-04:00 [COMMAND="bash ~/labenv/scripts/lab03b_aislamiento.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 03 (b)
+ Fecha: 2026-10-06T15:01:37-04:00
+==================================================================
+
+--- [A] Registros disponibles en este equipo -----------------------
+$ ls -la /var/log/ | head -20
+total 1492
+drwxr-xr-x  22 root              root              4096 Oct  6 14:58 .
+drwxr-xr-x  12 root              root              4096 Jun 14  2025 ..
+-rw-r--r--   1 root              root             12874 Sep  3 15:29 alternatives.log
+-rw-r--r--   1 root              root               931 Sep  1 18:53 alternatives.log.1
+-rw-r--r--   1 root              root             15311 Jul  3 05:17 alternatives.log.2.gz
+drwxr-x---   2 root              adm               4096 May 29  2025 apache2
+drwxr-xr-x   2 root              root              4096 Sep 17 14:40 apt
+-rw-------   1 root              root             70014 Oct  6 13:49 boot.log
+-rw-------   1 root              root             62626 Sep 15 15:40 boot.log.1
+-rw-------   1 root              root             17906 Sep 10 16:49 boot.log.2
+-rw-------   1 root              root              7636 Sep  6 19:57 boot.log.3
+-rw-------   1 root              root             33545 Sep  3 15:22 boot.log.4
+-rw-------   1 root              root             46238 Jul 10 15:09 boot.log.5
+-rw-------   1 root              root             23594 Jul  4 17:46 boot.log.6
+-rw-------   1 root              root             77892 Jul  3 05:33 boot.log.7
+-rw-rw----   1 root              utmp               384 Oct  6 13:51 btmp
+-rw-rw----   1 root              utmp              6528 Sep  1 18:54 btmp.1
+drwxr-xr-x   2 root              root              4096 Apr 24 14:13 cups
+-rw-r--r--   1 root              root             13419 Sep 17 14:40 dpkg.log
+$ ls -la /var/log/auth.log /var/log/secure /var/log/syslog 2>&1
+ls: cannot access '/var/log/auth.log': No such file or directory
+ls: cannot access '/var/log/secure': No such file or directory
+ls: cannot access '/var/log/syslog': No such file or directory
+$ journalctl --no-pager -n 3 2>&1 | head -5
+Oct 06 15:01:37 magdalena sshd-session[39658]: pam_unix(sshd:session): session opened for user mg(uid=1001) by mg(uid=0)
+Oct 06 15:01:37 magdalena systemd-logind[563]: New session '66' of user 'mg' with class 'user' and type 'tty'.
+Oct 06 15:01:37 magdalena systemd[1]: Started session-66.scope - Session 66 of User mg.
+$ groups
+mg root adm dialout fax cdrom floppy tape sudo audio dip video plugdev users netdev scanner lpadmin sambashare
+
+--- [B] Comparacion controlada: mismas opciones, distinto destino ---
+$ nmap -sS -p 1-200 --reason 127.0.0.1
+Not shown: 198 closed tcp ports (reset)
+PORT   STATE SERVICE REASON
+Nmap done: 1 IP address (1 host up) scanned in 0.16 seconds
+
+$ nmap -sS -p 1-200 --reason 192.168.56.103
+Not shown: 198 filtered tcp ports (no-response)
+PORT   STATE SERVICE REASON
+Nmap done: 1 IP address (1 host up) scanned in 7.13 seconds
+
+$ nmap -sT -p 1-200 --reason 192.168.56.103
+Not shown: 198 closed tcp ports (conn-refused)
+PORT   STATE SERVICE REASON
+Nmap done: 1 IP address (1 host up) scanned in 2.59 seconds
+
+--- [C] Misma prueba con salida XML para leer los 'extraports' ------
+  cmp_syn_loop:
+    <extraports state="closed" count="198">
+          2 <state state="open"
+  cmp_syn_target:
+    <extraports state="filtered" count="198">
+          2 <state state="open"
+  cmp_ct_target:
+    <extraports state="closed" count="198">
+          2 <state state="open"
+
+--- [D] ¿Se ve el escaneo en los registros de sshd? ----------------
+  lineas en journalctl -u ssh antes: 392
+
+$ nmap -sS -p 22 --max-retries 1 192.168.56.103   (solo SYN)
+Nmap done: 1 IP address (1 host up) scanned in 4.21 seconds
+  lineas tras SYN: 392  (delta 0)
+
+$ nmap -sT -p 22 --max-retries 1 192.168.56.103   (connect real)
+Nmap done: 1 IP address (1 host up) scanned in 4.61 seconds
+  lineas tras connect: 392  (delta 0)
+  ---- ultimas 12 lineas del registro de ssh ----
+  Oct 06 14:56:19 magdalena sshd-session[36901]: pam_unix(sshd:session): session opened for user mg(uid=1001) by mg(uid=0)
+  Oct 06 14:56:20 magdalena sshd-session[36901]: pam_unix(sshd:session): session closed for user mg
+  Oct 06 14:56:21 magdalena sshd-session[36925]: Accepted publickey for mg from 192.168.56.1 port 57266 ssh2: ED25519 SHA256:6ID3XFT+euTj/o61ijbWTpwZRLs6se/3jcaPDUsuJtc
+  Oct 06 14:56:21 magdalena sshd-session[36925]: pam_unix(sshd:session): session opened for user mg(uid=1001) by mg(uid=0)
+  Oct 06 14:56:22 magdalena sshd-session[36925]: pam_unix(sshd:session): session closed for user mg
+  Oct 06 14:56:22 magdalena sshd-session[36946]: Accepted publickey for mg from 192.168.56.1 port 57268 ssh2: ED25519 SHA256:6ID3XFT+euTj/o61ijbWTpwZRLs6se/3jcaPDUsuJtc
+  Oct 06 14:56:22 magdalena sshd-session[36946]: pam_unix(sshd:session): session opened for user mg(uid=1001) by mg(uid=0)
+  Oct 06 15:01:36 magdalena sshd-session[39639]: Accepted publickey for mg from 192.168.56.1 port 63149 ssh2: ED25519 SHA256:6ID3XFT+euTj/o61ijbWTpwZRLs6se/3jcaPDUsuJtc
+  Oct 06 15:01:36 magdalena sshd-session[39639]: pam_unix(sshd:session): session opened for user mg(uid=1001) by mg(uid=0)
+  Oct 06 15:01:36 magdalena sshd-session[39639]: pam_unix(sshd:session): session closed for user mg
+  Oct 06 15:01:37 magdalena sshd-session[39658]: Accepted publickey for mg from 192.168.56.1 port 63150 ssh2: ED25519 SHA256:6ID3XFT+euTj/o61ijbWTpwZRLs6se/3jcaPDUsuJtc
+  Oct 06 15:01:37 magdalena sshd-session[39658]: pam_unix(sshd:session): session opened for user mg(uid=1001) by mg(uid=0)
+
+  ---- tambien con -oN explicito sobre vsftpd (puerto 21) ----
+$ nmap -sT -p 21 --max-retries 1 192.168.56.103
+Nmap done: 1 IP address (1 host up) scanned in 4.70 seconds
+  Sep 17 14:51:03 magdalena systemd[1]: Starting vsftpd.service - vsftpd FTP server...
+  Sep 17 14:51:03 magdalena systemd[1]: Started vsftpd.service - vsftpd FTP server.
+  -- Boot ebf305859d7242f98336ba10c751bfe0 --
+  Sep 17 15:32:11 magdalena systemd[1]: Starting vsftpd.service - vsftpd FTP server...
+  Sep 17 15:32:11 magdalena systemd[1]: Started vsftpd.service - vsftpd FTP server.
+  -- Boot afacdd5cb40c4b5995aae25239ae5300 --
+  Oct 06 13:48:59 magdalena systemd[1]: Starting vsftpd.service - vsftpd FTP server...
+  Oct 06 13:48:59 magdalena systemd[1]: Started vsftpd.service - vsftpd FTP server.
+
+==================================================================
+ FIN 2026-10-06T15:02:13-04:00
+==================================================================
+
+Script done on 2026-10-06 15:02:13-04:00 [COMMAND_EXIT_CODE="0"]

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 15:15:17 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sV -O -&#45;version-intensity 5 -p 21,22,8080,8443 -oA /home/mg/evidencias/lab04/servicios_y_so 192.168.56.103 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sV -O -&#45;version-intensity 5 -p 21,22,8080,8443 -oA /home/mg/evidencias/lab04/servicios_y_so 192.168.56.103" start="1791314117" startstr="Tue Oct  6 15:15:17 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="4" services="21-22,8080,8443"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1791314122" endtime="1791314204"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.56.103" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="21"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ftp" product="vsftpd" version="3.0.5" ostype="Unix" method="probed" conf="10"><cpe>cpe:/a:vsftpd:vsftpd:3.0.5</cpe></service></port>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ssh" product="OpenSSH" version="10.4p1 Debian 4" extrainfo="protocol 2.0" ostype="Linux" method="probed" conf="10"><cpe>cpe:/a:openbsd:openssh:10.4p1</cpe><cpe>cpe:/o:linux:linux_kernel</cpe></service></port>
+<port protocol="tcp" portid="8080"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="http" product="SimpleHTTPServer" version="0.6" extrainfo="Python 3.13.14" method="probed" conf="10"><cpe>cpe:/a:python:simplehttpserver:0.6</cpe></service></port>
+<port protocol="tcp" portid="8443"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="https-alt" servicefp="SF-Port8443-TCP:V=7.99%T=SSL%I=5%D=10/6%Time=6AC548D6%P=x86_64-pc-linux-gnu%r(GetRequest,28A0,&quot;HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/html\r\n\r\n&lt;HTML&gt;&lt;BODY\x20BGCOLOR=\&quot;#ffffff\&quot;&gt;\n&lt;pre&gt;\n\ns_server\x20-accept\x208443\x20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/labenv/lab\.key\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renegotiation\.\nCiphers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x20\x20\x20\x20:TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x20\x20:TLS_CHACHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_AES_128_GCM_SHA256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-CHACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-CHACHA20-POLY1305\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\x20:DHE-DSS-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-&quot;)%r(FourOhFourRequest,28A0,&quot;HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/html\r\n\r\n&lt;HTML&gt;&lt;BODY\x20BGCOLOR=\&quot;#ffffff\&quot;&gt;\n&lt;pre&gt;\n\ns_server\x20-accept\x208443\x20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/labenv/lab\.key\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renegotiation\.\nCiphers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x20\x20\x20\x20:TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x20\x20:TLS_CHACHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_AES_128_GCM_SHA256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-CHACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-CHACHA20-POLY1305\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\x20:DHE-DSS-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-&quot;);" tunnel="ssl" method="table" conf="3"/></port>
+</ports>
+<os><portused state="open" proto="tcp" portid="21"/>
+<portused state="closed" proto="udp" portid="31597"/>
+<osmatch name="Linux 2.6.32" accuracy="96" line="59503">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="2.6.X" accuracy="96"><cpe>cpe:/o:linux:linux_kernel:2.6.32</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.0 - 6.2" accuracy="96" line="72241">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="96"><cpe>cpe:/o:linux:linux_kernel:5</cpe></osclass>
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="6.X" accuracy="96"><cpe>cpe:/o:linux:linux_kernel:6</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 6.8" accuracy="95" line="73594">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="6.X" accuracy="95"><cpe>cpe:/o:linux:linux_kernel:6.8</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.9" accuracy="94" line="73044">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="94"><cpe>cpe:/o:linux:linux_kernel:5.9</cpe></osclass>
+</osmatch>
+<osmatch name="HP P2000 G3 NAS device" accuracy="92" line="38292">
+<osclass type="storage-misc" vendor="HP" osfamily="embedded" accuracy="92"><cpe>cpe:/h:hp:p2000_g3</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 3.7 - 4.19" accuracy="91" line="69589">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="3.X" accuracy="91"><cpe>cpe:/o:linux:linux_kernel:3</cpe></osclass>
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="4.X" accuracy="91"><cpe>cpe:/o:linux:linux_kernel:4</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 3.19 - 4.4" accuracy="91" line="70523">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="4.X" accuracy="91"><cpe>cpe:/o:linux:linux_kernel:4</cpe></osclass>
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="3.X" accuracy="91"><cpe>cpe:/o:linux:linux_kernel:3</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.10 - 5.11" accuracy="91" line="72372">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="91"><cpe>cpe:/o:linux:linux_kernel:5</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.4 - 5.15" accuracy="91" line="72952">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="91"><cpe>cpe:/o:linux:linux_kernel:5</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 6.6" accuracy="91" line="73537">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="6.X" accuracy="91"><cpe>cpe:/o:linux:linux_kernel:6.6</cpe></osclass>
+</osmatch>
+</os>
+<uptime seconds="3" lastboot="Tue Oct  6 15:16:41 2026"/>
+<distance value="0"/>
+<tcpsequence index="256" difficulty="Good luck!" values="7D237C84,534F8E68,32FE5075,843E479D,C748863D,C0842EA3"/>
+<ipidsequence class="All zeros" values="0,0,0,0,0,0"/>
+<tcptssequence class="other" values="364A66E0,5F1ADC9,D58D4FFE,E25C8F2B,CA1E2148,E6721E4D"/>
+<times srtt="158" rttvar="71" to="100000"/>
+</host>
+<runstats><finished time="1791314204" timestr="Tue Oct  6 15:16:44 2026" summary="Nmap done at Tue Oct  6 15:16:44 2026; 1 IP address (1 host up) scanned in 87.29 seconds" elapsed="87.29" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

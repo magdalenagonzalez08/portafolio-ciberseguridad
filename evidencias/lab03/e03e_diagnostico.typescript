@@ -1,0 +1,39 @@
+Script started on 2026-10-06 15:10:50-04:00 [COMMAND="bash ~/labenv/scripts/lab03e_diagnostico.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 03 (e)   2026-10-06T15:10:50-04:00
+==================================================================
+
+--- [A] Por que tcpdump no capturo nada ----------------------------
+$ cat /tmp/tcpdump.log
+tcpdump: lo: You don't have permission to perform this capture on that device
+(Attempt to create packet socket failed - CAP_NET_RAW may be required)
+$ cat /tmp/tcpdump2.log
+tcpdump: lo: You don't have permission to perform this capture on that device
+(Attempt to create packet socket failed - CAP_NET_RAW may be required)
+$ ls -l /tmp/lab03_cap.pcap
+ls: cannot access '/tmp/lab03_cap.pcap': No such file or directory
+  (el fichero pcap no se creo)
+
+Intento manual para ver el error real:
+$ timeout 3 tcpdump -i lo -n -c 3 2>&1 | head -5
+tcpdump: lo: You don't have permission to perform this capture on that device
+(Attempt to create packet socket failed - CAP_NET_RAW may be required)
+
+--- [B] Coste del DNS en -sT, con y sin -n --------------------------
+  -sT -p 22 SIN -n -> 2.61 s
+  -sT -p 22 CON  -n -> 0.15 s
+  -sS -p 22 CON  -n -> 0.35 s
+
+  -sT -p 21 SIN -n -> 4.68 s
+  -sT -p 21 CON  -n -> 0.13 s
+  -sS -p 21 CON  -n -> 0.30 s
+
+--- [C] Repeticion de la prueba de registro, ahora con -n -----------
+Nmap done: 1 IP address (1 host up) scanned in 0.07 seconds
+  eventos de sshd tras -sT con -n: 0
+
+==================================================================
+ FIN 2026-10-06T15:11:02-04:00
+==================================================================
+
+Script done on 2026-10-06 15:11:02-04:00 [COMMAND_EXIT_CODE="0"]

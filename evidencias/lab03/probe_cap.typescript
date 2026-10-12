@@ -1,0 +1,43 @@
+Script started on 2026-10-06 14:28:13-04:00 [COMMAND="bash ~/probe_cap.sh" <not executed on terminal>]
+### [1] Identidad y grupos
+uid=1001(mg) gid=1001(mg) groups=1001(mg),0(root),4(adm),20(dialout),21(fax),24(cdrom),25(floppy),26(tape),27(sudo),29(audio),30(dip),44(video),46(plugdev),100(users),101(netdev),103(scanner),125(lpadmin),990(sambashare)
+
+### [2] Capacidades de archivo en /usr/bin/nmap
+$ getcap -v /usr/bin/nmap
+/usr/bin/nmap
+(sin salida = sin capacidades de archivo asignadas)
+
+### [3] Test directo de socket raw desde Python
+$ python3 -c ... SOCK_RAW ...
+RAW SOCKET: DENEGADO -> [Errno 1] Operation not permitted
+
+### [4] Test de socket AF_PACKET
+AF_PACKET: DENEGADO -> [Errno 1] Operation not permitted
+
+### [5] Ejecucion nmap -sS (SYN) hacia el objetivo autorizado 127.0.0.1
+$ nmap -sS -p 22,21 127.0.0.1
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:28 -0400
+Stats: 0:00:00 elapsed; 0 hosts completed (1 up), 1 undergoing SYN Stealth Scan
+SYN Stealth Scan Timing: About 100.00% done; ETC: 14:28 (0:00:00 remaining)
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00063s latency).
+
+PORT   STATE SERVICE
+21/tcp open  ftp
+22/tcp open  ssh
+
+Nmap done: 1 IP address (1 host up) scanned in 0.19 seconds
+
+### [6] Ejecucion nmap -sT (connect) mismo objetivo
+$ nmap -sT -p 22,21 127.0.0.1
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 14:28 -0400
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.025s latency).
+
+PORT   STATE SERVICE
+21/tcp open  ftp
+22/tcp open  ssh
+
+Nmap done: 1 IP address (1 host up) scanned in 0.12 seconds
+
+Script done on 2026-10-06 14:28:14-04:00 [COMMAND_EXIT_CODE="0"]

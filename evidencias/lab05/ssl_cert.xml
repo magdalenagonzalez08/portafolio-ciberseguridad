@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 15:26:39 2026 as: /usr/lib/nmap/nmap -&#45;privileged -&#45;script ssl-cert -p 8443 -oA /home/mg/evidencias/lab05/ssl_cert 192.168.56.103 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -&#45;script ssl-cert -p 8443 -oA /home/mg/evidencias/lab05/ssl_cert 192.168.56.103" start="1791314799" startstr="Tue Oct  6 15:26:39 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="1" services="8443"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1791314804" endtime="1791314804"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.56.103" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="8443"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="https-alt" method="table" conf="3"/><script id="ssl-cert" output="Subject: commonName=lab.magalena.local/organizationName=Laboratorio academico local/countryName=PA&#xa;Issuer: commonName=lab.magalena.local/organizationName=Laboratorio academico local/countryName=PA&#xa;Public Key type: rsa&#xa;Public Key bits: 2048&#xa;Signature Algorithm: sha256WithRSAEncryption&#xa;Not valid before: 2026-10-06T18:31:13&#xa;Not valid after:  2026-11-05T18:31:13&#xa;MD5:     42fd f0ef 2040 c09b 1d2d ee99 e7d5 3c29&#xa;SHA-1:   4fe4 de55 576d 2c2d fc96 b1ed 23a9 e16a 62f3 53dc&#xa;SHA-256: a89d a637 4a97 b53d 1d94 33fc 23d5 e5c3 a2e4 2401 2147 fb2c 5385 7dcb 00d1 8f06"><table key="subject">
+<elem key="commonName">lab.magalena.local</elem>
+<elem key="countryName">PA</elem>
+<elem key="organizationName">Laboratorio academico local</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">lab.magalena.local</elem>
+<elem key="countryName">PA</elem>
+<elem key="organizationName">Laboratorio academico local</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">E9098214DBE0B4E6E07C70DA7D3F47556AEAD6515106D4F6A71E758A48093E12E26248D3ADF130F0ACECA116C5D860DC4A4D0801F91B86237277A589300432AE757D8AD5ECCB69F365007A92A9F0A9C4468BC0817EC35FA3B1EAE759CDD8611D80AD49E0D1FA24C940464A72843EC6ACC7F57CDC9EF52288D0E9DEF0E4FED554CED47E094533726661BE9943D62DBFC4E7E9A348FBC0846F94DEC4D342E1ADDBF7481C1CF00BF68F82452BC00FA322F444EDB8413C55F758D1DFF3B8C0936449A7DAC970B0BF707A1EB31274C6E3A87221CD249FA578C61E345CC006F38806F3DB2DC1B4B95A75A1D2BB4CFA3C3B63C7628F79295E891FA23C1F55AF7DD33551</elem>
+<elem key="exponent">65537</elem>
+</table>
+<table key="extensions">
+<table>
+<elem key="name">X509v3 Subject Key Identifier</elem>
+<elem key="value">A7:15:67:75:33:D0:4D:D8:91:D7:05:9D:BF:2B:80:E5:A8:8C:DF:CB</elem>
+</table>
+<table>
+<elem key="name">X509v3 Authority Key Identifier</elem>
+<elem key="value">A7:15:67:75:33:D0:4D:D8:91:D7:05:9D:BF:2B:80:E5:A8:8C:DF:CB</elem>
+</table>
+<table>
+<elem key="name">X509v3 Basic Constraints</elem>
+<elem key="value">CA:TRUE</elem>
+<elem key="critical">true</elem>
+</table>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2026-10-06T18:31:13</elem>
+<elem key="notAfter">2026-11-05T18:31:13</elem>
+</table>
+<elem key="md5">42fdf0ef2040c09b1d2dee99e7d53c29</elem>
+<elem key="sha1">4fe4de55576d2c2dfc96b1ed23a9e16a62f353dc</elem>
+<elem key="sha256">a89da6374a97b53d1d9433fc23d5e5c3a2e424012147fb2c53857dcb00d18f06</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIIDgTCCAmmgAwIBAgIUJXLo8JhvTy8QdXvfSkqdwE4RF4owDQYJKoZIhvcNAQEL&#xa;BQAwUDEbMBkGA1UEAwwSbGFiLm1hZ2FsZW5hLmxvY2FsMSQwIgYDVQQKDBtMYWJv&#xa;cmF0b3JpbyBhY2FkZW1pY28gbG9jYWwxCzAJBgNVBAYTAlBBMB4XDTI2MTAwNjE4&#xa;MzExM1oXDTI2MTEwNTE4MzExM1owUDEbMBkGA1UEAwwSbGFiLm1hZ2FsZW5hLmxv&#xa;Y2FsMSQwIgYDVQQKDBtMYWJvcmF0b3JpbyBhY2FkZW1pY28gbG9jYWwxCzAJBgNV&#xa;BAYTAlBBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6QmCFNvgtObg&#xa;fHDafT9HVWrq1lFRBtT2px51ikgJPhLiYkjTrfEw8KzsoRbF2GDcSk0IAfkbhiNy&#xa;d6WJMAQyrnV9itXsy2nzZQB6kqnwqcRGi8CBfsNfo7Hq51nN2GEdgK1J4NH6JMlA&#xa;RkpyhD7GrMf1fNye9SKI0One8OT+1VTO1H4JRTNyZmG+mUPWLb/E5+mjSPvAhG+U&#xa;3sTTQuGt2/dIHBzwC/aPgkUrwA+jIvRE7bhBPFX3WNHf87jAk2RJp9rJcLC/cHoe&#xa;sxJ0xuOociHNJJ+leMYeNFzABvOIBvPbLcG0uVp1odK7TPo8O2PHYo95KV6JH6I8&#xa;H1WvfdM1UQIDAQABo1MwUTAdBgNVHQ4EFgQUpxVndTPQTdiR1wWdvyuA5aiM38sw&#xa;HwYDVR0jBBgwFoAUpxVndTPQTdiR1wWdvyuA5aiM38swDwYDVR0TAQH/BAUwAwEB&#xa;/zANBgkqhkiG9w0BAQsFAAOCAQEAkbmh0uTDYLdLiJqQJEnKcRi/Mpk4r1L74eJ9&#xa;JJ0oSVDDlWvvI6jkaBbY+Q/6YkXv9HXPrWyE4UBWH/VL0eanIHGozWgzyvJzBCVO&#xa;dEva7XHa5KQ4yFuuYw+Xri7lBpfU/uNE5nr+pmtxNL3gPpLHZjQUcbYtbccIzK+d&#xa;pyWELXTsUVgParv9UDaa5BraTo6jHgIZLVRyScCJUqYObIcx0uUiCmKVH96M0LPj&#xa;SPrB3AxO4wweXLXrUnj6xVdiOJkaFbfGeEwH5f2o/pFNdww90PEu8MCAW+YfPFxb&#xa;ePsfOThROw6kcfWttuUORKCBrOyUbj5jvMOuU7PDOyIc60LEug==&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script></port>
+</ports>
+<times srtt="96" rttvar="5000" to="100000"/>
+</host>
+<runstats><finished time="1791314804" timestr="Tue Oct  6 15:26:44 2026" summary="Nmap done at Tue Oct  6 15:26:44 2026; 1 IP address (1 host up) scanned in 5.07 seconds" elapsed="5.07" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

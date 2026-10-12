@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 15:14:52 2026 as: /usr/lib/nmap/nmap -&#45;privileged -O -&#45;reason -p 1-100 -oA /home/mg/evidencias/lab04/os_loopback 127.0.0.1 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -O -&#45;reason -p 1-100 -oA /home/mg/evidencias/lab04/os_loopback 127.0.0.1" start="1791314092" startstr="Tue Oct  6 15:14:52 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="100" services="1-100"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1791314092" endtime="1791314105"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="127.0.0.1" addrtype="ipv4"/>
+<hostnames>
+<hostname name="localhost" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="98">
+<extrareasons reason="reset" count="98" proto="tcp" ports="1-20,23-100"/>
+</extraports>
+<port protocol="tcp" portid="21"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ftp" method="table" conf="3"/></port>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ssh" method="table" conf="3"/></port>
+</ports>
+<os><portused state="open" proto="tcp" portid="21"/>
+<portused state="closed" proto="tcp" portid="1"/>
+<portused state="closed" proto="udp" portid="38947"/>
+<osmatch name="Linux 2.6.32" accuracy="97" line="59503">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="2.6.X" accuracy="97"><cpe>cpe:/o:linux:linux_kernel:2.6.32</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.0 - 6.2" accuracy="97" line="72241">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="97"><cpe>cpe:/o:linux:linux_kernel:5</cpe></osclass>
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="6.X" accuracy="97"><cpe>cpe:/o:linux:linux_kernel:6</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 3.7 - 4.19" accuracy="93" line="69589">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="3.X" accuracy="93"><cpe>cpe:/o:linux:linux_kernel:3</cpe></osclass>
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="4.X" accuracy="93"><cpe>cpe:/o:linux:linux_kernel:4</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.10 - 5.11" accuracy="93" line="72372">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="93"><cpe>cpe:/o:linux:linux_kernel:5</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.4 - 5.15" accuracy="93" line="72952">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="93"><cpe>cpe:/o:linux:linux_kernel:5</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.9" accuracy="93" line="73044">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="93"><cpe>cpe:/o:linux:linux_kernel:5.9</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 6.8" accuracy="93" line="73594">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="6.X" accuracy="93"><cpe>cpe:/o:linux:linux_kernel:6.8</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 6.6" accuracy="93" line="73537">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="6.X" accuracy="93"><cpe>cpe:/o:linux:linux_kernel:6.6</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 3.8 - 3.9" accuracy="92" line="69872">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="3.X" accuracy="92"><cpe>cpe:/o:linux:linux_kernel:3</cpe></osclass>
+</osmatch>
+<osmatch name="Linux 5.15" accuracy="92" line="72678">
+<osclass type="general purpose" vendor="Linux" osfamily="Linux" osgen="5.X" accuracy="92"><cpe>cpe:/o:linux:linux_kernel:5.15</cpe></osclass>
+</osmatch>
+<osfingerprint fingerprint="OS:SCAN(V=7.99%E=4%D=10/6%OT=21%CT=1%CU=38947%PV=Y%DS=0%DC=L%G=Y%TM=6AC548B&#xa;OS:9%P=x86_64-pc-linux-gnu)SEQ(SP=109%GCD=1%ISR=10A%TI=Z%CI=Z%II=I%TS=1F)SE&#xa;OS:Q(SP=FB%GCD=1%ISR=108%TI=Z%CI=Z%II=I%TS=21)SEQ(SP=FD%GCD=1%ISR=10A%TI=Z%&#xa;OS:CI=Z%II=I%TS=21)SEQ(SP=FE%GCD=1%ISR=103%TI=Z%CI=Z%II=I%TS=22)SEQ(SP=FF%G&#xa;OS:CD=1%ISR=106%TI=Z%CI=Z%II=I%TS=21)OPS(O1=MFFD7ST11NW9%O2=MFFD7ST11NW9%O3&#xa;OS:=MFFD7NNT11NW9%O4=MFFD7ST11NW9%O5=MFFD7ST11NW9%O6=MFFD7ST11)WIN(W1=FFCB%&#xa;OS:W2=FFCB%W3=FFCB%W4=FFCB%W5=FFCB%W6=FFCB)ECN(R=Y%DF=Y%T=40%W=FFD7%O=MFFD7&#xa;OS:NNSNW9%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R&#xa;OS:=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=&#xa;OS:AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=&#xa;OS:40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID&#xa;OS:=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)&#xa;"/>
+</os>
+<uptime seconds="2" lastboot="Tue Oct  6 15:15:03 2026"/>
+<distance value="0"/>
+<tcpsequence index="251" difficulty="Good luck!" values="FA01346D,A236B055,59380A25,8BAF3889,C8465FF0,ADF62862"/>
+<ipidsequence class="All zeros" values="0,0,0,0,0,0"/>
+<tcptssequence class="other" values="474FAC3A,3F4792FC,208D92E6,BBC95FD9,E568A87E,DAE39AD7"/>
+<times srtt="124" rttvar="14" to="100000"/>
+</host>
+<runstats><finished time="1791314105" timestr="Tue Oct  6 15:15:05 2026" summary="Nmap done at Tue Oct  6 15:15:05 2026; 1 IP address (1 host up) scanned in 13.30 seconds" elapsed="13.30" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

@@ -1,0 +1,26 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:14:52 2026 as: /usr/lib/nmap/nmap --privileged -O --reason -p 1-100 -oA /home/mg/evidencias/lab04/os_loopback 127.0.0.1
+Nmap scan report for localhost (127.0.0.1)
+Host is up, received localhost-response (0.00012s latency).
+Not shown: 98 closed tcp ports (reset)
+PORT   STATE SERVICE REASON
+21/tcp open  ftp     syn-ack ttl 64
+22/tcp open  ssh     syn-ack ttl 64
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.99%E=4%D=10/6%OT=21%CT=1%CU=38947%PV=Y%DS=0%DC=L%G=Y%TM=6AC548B
+OS:9%P=x86_64-pc-linux-gnu)SEQ(SP=109%GCD=1%ISR=10A%TI=Z%CI=Z%II=I%TS=1F)SE
+OS:Q(SP=FB%GCD=1%ISR=108%TI=Z%CI=Z%II=I%TS=21)SEQ(SP=FD%GCD=1%ISR=10A%TI=Z%
+OS:CI=Z%II=I%TS=21)SEQ(SP=FE%GCD=1%ISR=103%TI=Z%CI=Z%II=I%TS=22)SEQ(SP=FF%G
+OS:CD=1%ISR=106%TI=Z%CI=Z%II=I%TS=21)OPS(O1=MFFD7ST11NW9%O2=MFFD7ST11NW9%O3
+OS:=MFFD7NNT11NW9%O4=MFFD7ST11NW9%O5=MFFD7ST11NW9%O6=MFFD7ST11)WIN(W1=FFCB%
+OS:W2=FFCB%W3=FFCB%W4=FFCB%W5=FFCB%W6=FFCB)ECN(R=Y%DF=Y%T=40%W=FFD7%O=MFFD7
+OS:NNSNW9%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R
+OS:=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=
+OS:AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=
+OS:40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID
+OS:=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)
+
+Network Distance: 0 hops
+
+OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Tue Oct  6 15:15:05 2026 -- 1 IP address (1 host up) scanned in 13.30 seconds

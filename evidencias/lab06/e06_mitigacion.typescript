@@ -1,0 +1,149 @@
+Script started on 2026-10-06 15:35:00-04:00 [COMMAND="bash ~/labenv/scripts/lab06_mitigacion.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 06 - MITIGACION Y VERIFICACION
+ Fecha: 2026-10-06T15:35:00-04:00
+ Objetivo autorizado: 192.168.56.103
+==================================================================
+
+################# ESTADO ANTES DE LA MITIGACION #################
+------------------------------------------------------------
+[A1] Interfaces en escucha del puerto 8080
+$ ss -tln | grep 8080
+LISTEN 0      5            0.0.0.0:8080      0.0.0.0:*
+
+[A2] Escaneo SYN sobre la IP del objetivo autorizado
+$ nmap -sS -p 8080 --reason 192.168.56.103
+PORT     STATE SERVICE    REASON
+8080/tcp open  http-proxy syn-ack ttl 64
+Nmap done: 1 IP address (1 host up) scanned in 4.65 seconds
+
+[A3] Escaneo TCP connect sobre la IP del objetivo autorizado
+$ nmap -sT -p 8080 --reason 192.168.56.103
+PORT     STATE SERVICE    REASON
+8080/tcp open  http-proxy syn-ack
+Nmap done: 1 IP address (1 host up) scanned in 4.14 seconds
+
+[A4] Peticion HTTP por la IP del objetivo autorizado
+$ curl -s -o /dev/null -w 'HTTP %{http_code}' --max-time 5 http://192.168.56.103:8080/
+  HTTP 200
+
+[A5] Peticion HTTP por el bucle de trabajo
+$ curl -s -o /dev/null -w 'HTTP %{http_code}' --max-time 5 http://127.0.0.1:8080/
+  HTTP 200
+
+[A6] Servicios que NO deben cambiar
+$ ss -tln | grep -E ":21 |:22 |:8443 "
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*
+LISTEN 0      128             [::]:22           [::]:*
+LISTEN 0      32                 *:21              *:*
+LISTEN 0      4096               *:8443            *:*
+
+################# APLICACION DE LA MITIGACION ###################
+------------------------------------------------------------
+Accion: reiniciar el servicio HTTP enlazado SOLO a 127.0.0.1
+Justificacion: el servicio es una utilidad local de pruebas y no
+necesita ser visible en la interfaz de gestion ni en la NAT.
+
+$ pkill -f "http.server 8080"
+  servicio anterior detenido
+$ nohup setsid python3 -m http.server 8080 --bind 127.0.0.1 > ~/labenv/http.log 2>&1 &
+$ ss -tln | grep 8080
+LISTEN 0      5          127.0.0.1:8080      0.0.0.0:*
+
+################# ESTADO DESPUES DE LA MITIGACION ###############
+------------------------------------------------------------
+[D1] Interfaces en escucha del puerto 8080
+$ ss -tln | grep 8080
+LISTEN 0      5          127.0.0.1:8080      0.0.0.0:*
+
+[D2] Escaneo SYN sobre la IP del objetivo autorizado
+$ nmap -sS -p 8080 --reason 192.168.56.103
+PORT     STATE    SERVICE    REASON
+8080/tcp filtered http-proxy no-response
+Nmap done: 1 IP address (1 host up) scanned in 6.65 seconds
+
+[D3] Escaneo TCP connect sobre la IP del objetivo autorizado
+$ nmap -sT -p 8080 --reason 192.168.56.103
+PORT     STATE  SERVICE    REASON
+8080/tcp closed http-proxy conn-refused
+Nmap done: 1 IP address (1 host up) scanned in 1.07 seconds
+
+[D4] Peticion HTTP por la IP del objetivo autorizado (debe fallar)
+$ curl -s -o /dev/null -w 'HTTP %{http_code}' --max-time 5 http://192.168.56.103:8080/
+  rechazado
+
+[D5] Peticion HTTP por el bucle de trabajo (debe seguir funcionando)
+$ curl -s -o /dev/null -w 'HTTP %{http_code}' --max-time 5 http://127.0.0.1:8080/
+  HTTP 200
+
+[D6] El servicio de gestion SSH no se ha visto afectado
+$ ss -tln | grep ":22 "
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*
+LISTEN 0      128             [::]:22           [::]:*
+
+[D7] Comprobacion de que la ruta sigue siendo local
+$ ip route get 192.168.56.103
+local [1;35m192.168.56.103 [0mdev [1;36mlo [0msrc [1;35m192.168.56.103 [0muid 1001 
+    cache <local> 
+
+################# CUADRO COMPARATIVO ############################
+------------------------------------------------------------
+Tabla generada a partir de las pruebas A y D de esta misma ejecucion,
+no de valores escritos a mano.
+  PRUEBA                                       | ANTES        | DESPUES     
+  -------------------------------------------- | ------------ | ------------
+  ss -tln, interfaz de escucha 8080            | 0.0.0.0:8080  | 127.0.0.1:8080 
+  nmap -sS 8080 sobre 192.168.56.103           | open         | filtered    
+  nmap -sT 8080 sobre 192.168.56.103           | open         | closed      
+  curl http://192.168.56.103:8080              | HTTP 200     | rechazado   
+  curl http://127.0.0.1:8080                   | HTTP 200     | HTTP 200    
+  sshd en el puerto 22                         | activo       | activo      
+
+################# PROPUESTA NO EJECUTADA #########################
+------------------------------------------------------------
+Las siguientes medidas NO se han aplicado en este laboratorio.
+Se dejan escritas con su procedimiento de verificacion para que
+puedan ejecutarse cuando haya autorizacion y acceso con privilegios.
+
+P-1  Endurecer el acceso SSH
+     Motivo observable, se ha comprobado que el servidor acepta
+     password y publickey:
+       mg@192.168.56.103: Permission denied (publickey,password)
+     Propuesta, requiere sudo y modifica sshd:
+       sudoedit /etc/ssh/sshd_config      # PasswordAuthentication no
+       sudo sshd -t                        # validar sintaxis
+       sudo systemctl reload ssh
+     Verificacion equivalente y no destructiva:
+       ssh -o PreferredAuthentications=password -o BatchMode=yes mg@192.168.56.103 exit
+       (antes acepta password, despues debe decir 'Permission denied (publickey)')
+     ESTADO: NO EJECUTADO. Requiere autorizacion explicita porque
+     un error de configuracion dejaria fuera el acceso de gestion.
+
+P-2  Revisar la configuracion efectiva de sshd
+     Motivo, en el Laboratorio 01 no se pudo leer:
+       sudo sshd -T   -> sudo: a password is required
+     Procedimiento pendiente, solo lectura:
+       sudo sshd -T | grep -E 'permitrootlogin|passwordauthentication'
+     ESTADO: NO EJECUTADO. Es una comprobacion de solo lectura.
+
+P-3  Confirmar el estado del login anonimo en FTP
+     Se observo con una prueba unica:
+       curl --user anonymous:anonymous ftp://192.168.56.103:21/  ->  530 Access denied
+     El script ftp-anon no dejo salida en el XML, por lo que no se
+     uso como fuente. Verificacion propuesta:
+       sudo grep -E '^\s*anonymous_enable' /etc/vsftpd.conf
+     ESTADO: NO EJECUTADO. Solo lectura, requiere privilegios.
+
+################# REVERSIBILIDAD #################################
+------------------------------------------------------------
+Esta mitigacion se revierte con:
+  pkill -f 'http.server 8080'
+  nohup setsid python3 -m http.server 8080 --bind 0.0.0.0 > ~/labenv/http.log 2>&1 &
+O directamente retirando todo el entorno de pruebas:
+  bash ~/labenv/scripts/teardown_lab_env.sh
+
+==================================================================
+ LABORATORIO 06 - FIN  2026-10-06T15:35:19-04:00
+==================================================================
+
+Script done on 2026-10-06 15:35:19-04:00 [COMMAND_EXIT_CODE="0"]

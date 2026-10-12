@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:35:18 2026 as: /usr/lib/nmap/nmap --privileged -sT -p 8080 --reason -oA /home/mg/evidencias/lab06/despues_ct 192.168.56.103
+Host: 192.168.56.103 ()	Status: Up
+Host: 192.168.56.103 ()	Ports: 8080/closed/tcp//http-proxy///
+# Nmap done at Tue Oct  6 15:35:19 2026 -- 1 IP address (1 host up) scanned in 1.07 seconds

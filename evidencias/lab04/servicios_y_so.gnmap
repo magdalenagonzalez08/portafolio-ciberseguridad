@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:15:17 2026 as: /usr/lib/nmap/nmap --privileged -sV -O --version-intensity 5 -p 21,22,8080,8443 -oA /home/mg/evidencias/lab04/servicios_y_so 192.168.56.103
+Host: 192.168.56.103 ()	Status: Up
+Host: 192.168.56.103 ()	Ports: 21/open/tcp//ftp//vsftpd 3.0.5/, 22/open/tcp//ssh//OpenSSH 10.4p1 Debian 4 (protocol 2.0)/, 8080/open/tcp//http//SimpleHTTPServer 0.6 (Python 3.13.14)/, 8443/open/tcp//ssl|https-alt?///	Seq Index: 256	IP ID Seq: All zeros
+# Nmap done at Tue Oct  6 15:16:44 2026 -- 1 IP address (1 host up) scanned in 87.29 seconds

@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio 02. Descubrimiento de hosts | Portafolio de ciberseguridad</title>
+<meta name="description" content="Laboratorio 02: comparación de mecanismos de descubrimiento de hosts de Nmap sobre un objetivo autorizado, con análisis del motivo declarado en el XML y del coste de la resolución DNS.">
+<script>
+(function(){try{var t=localStorage.getItem("tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Portafolio de <span>laboratorios</span></a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="../index.html#proyecto">Proyecto</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../index.html#metodologia">Metodología</a>
+      <a href="../index.html#recursos">Recursos</a>
+        <button class="theme-toggle" type="button" aria-label="Cambiar tema">☾</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Laboratorio 02 de 06 · Estado completado</p>
+      <h1>Descubrimiento de hosts</h1>
+      <p class="lede">Ocho mecanismos de descubrimiento de Nmap aplicados al único objetivo autorizado, seguidos de la lectura del atributo <code>reason</code> en el XML. La conclusión importante no es que todos respondan, sino que ninguno envió un paquete.</p>
+    </div>
+  </div>
+
+  <div class="wrap section">
+
+    <nav class="toc" aria-label="Índice del informe">
+      <h2>Índice del informe</h2>
+      <ol>
+        <li><a href="#s1">Resumen para selección</a></li>
+        <li><a href="#s2">Objetivo técnico</a></li>
+        <li><a href="#s3">Entorno y alcance</a></li>
+        <li><a href="#s4">Conocimientos previos</a></li>
+        <li><a href="#s5">Procedimiento reproducible</a></li>
+        <li><a href="#s6">Comandos y opciones</a></li>
+        <li><a href="#s7">Resultados observados</a></li>
+        <li><a href="#s8">Evidencias vinculadas</a></li>
+        <li><a href="#s9">Interpretación técnica</a></li>
+        <li><a href="#s10">Implicación defensiva</a></li>
+        <li><a href="#s11">Errores y limitaciones</a></li>
+        <li><a href="#s12">Conclusión</a></li>
+        <li><a href="#s13">Preguntas de entrevista</a></li>
+        <li><a href="#s14">Referencias</a></li>
+      </ol>
+    </nav>
+
+<section id="s1">
+      <h2>1. Resumen para una persona de selección</h2>
+      <p>Este laboratorio compara los mecanismos de descubrimiento de hosts de Nmap, es decir la pregunta previa a cualquier escaneo de puertos, ¿está este host arriba? Se ejecutaron ocho variantes, desde eco ICMP clásico hasta ARP, y todas declararon que el objetivo responde.</p>
+      <p>El hallazgo útil apareció al leer el XML en lugar de quedarse con la línea <code>Host is up</code>. Los ocho archivos declaran <code>reason="localhost-response"</code> y la opción <code>-vv</code> muestra <code>Raw packets sent 0 (0B)</code>. <strong>Nmap no emitió ni un probe</strong> porque reconoció que la dirección es propia del equipo y la resolvió localmente. Un resultado que en pantalla parece idéntico a un descubrimiento real no lo es.</p>
+      <div class="note">
+        <span class="tag">Naturaleza del trabajo</span>
+        <p>Laboratorio académico sobre una máquina virtual propia, ejecutado por SSH. El objetivo autorizado sigue siendo <code>192.168.56.103</code>, la propia máquina Kali. No se escaneó ninguna otra dirección.</p>
+      </div>
+    </section>
+
+<section id="s2">
+      <h2>2. Objetivo técnico</h2>
+      <ul>
+        <li>Ejecutar los mecanismos de descubrimiento de Nmap por separado y dejar constancia de cuál responde en este entorno.</li>
+        <li>Guardar cada salida en formato <code>-oA</code> para poder leer después el motivo declarado en el XML.</li>
+        <li>Verificar con <code>-vv</code> si se envía tráfico real o el host se resuelve localmente.</li>
+        <li>Cuantificar el coste temporal de la resolución DNS con la misma prueba hecha con y sin <code>-n</code>.</li>
+        <li>Registrar el vecindario ARP visible sin escanearlo, porque pertenece a direcciones fuera de alcance.</li>
+        <li>Declarar qué comparación no pudo reproducirse dentro del alcance autorizado.</li>
+      </ul>
+    </section>
+
+<section id="s3">
+      <h2>3. Entorno y alcance</h2>
+      <p>Se reutiliza la línea base del Laboratorio 01 sin modificarla. Máquina Kali 2026.3 en VirtualBox, usuario <code>mg</code>, Nmap <code>7.99</code>, acceso por clave SSH.</p>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 1. Parámetros de este laboratorio.</caption>
+          <thead><tr><th>Aspecto</th><th>Valor</th><th>Fuente</th></tr></thead>
+          <tbody>
+            <tr><td>Objetivo autorizado</td><td><code>192.168.56.103</code></td><td>Autorización de la propietaria del laboratorio</td></tr>
+            <tr><td>Dirección adicional permitida</td><td><code>127.0.0.1</code></td><td>Bucle de trabajo, usada como comparación</td></tr>
+            <tr><td>Servidor DNS declarado</td><td><code>192.168.18.2</code></td><td><code>/etc/resolv.conf</code></td></tr>
+            <tr><td>Ruta hacia el objetivo</td><td><code>dev lo</code></td><td><code>ip route get 192.168.56.103</code></td></tr>
+            <tr><td>Fecha de ejecución</td><td>2026-10-06, de 14:48 a 15:41 (UTC-04:00)</td><td>Cabeceras de las transcripciones</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warn">
+        <span class="tag">Fuera de alcance</span>
+        <p><code>ip neigh</code> mostró que hay otros equipos en la red host-only. <strong>Ninguno se escaneó.</strong> Las direcciones <code>192.168.56.1</code>, <code>192.168.56.100</code>, <code>192.168.56.0/24</code> y <code>10.0.2.0/24</code> quedan excluidas igual que en el Laboratorio 01.</p>
+      </div>
+    </section>
+
+<section id="s4">
+      <h2>4. Conocimientos previos</h2>
+      <ul>
+        <li><strong>ICMP</strong>, tipos de mensaje 8 (eco) y 13 (marca de tiempo) y por qué algunos filtros los descartan.</li>
+        <li><strong>ARP</strong> como descubrimiento de capa 2, limitado a la propia subred.</li>
+        <li><strong>El proceso de tres vías de TCP</strong> y el uso de SYN y ACK como sondas de presencia.</li>
+        <li><strong>UDP</strong> y su carácter sin conexión, con la necesidad de inferir el estado.</li>
+        <li><strong>Resolución de nombres</strong>, TTL del caché y por qué una consulta fallida se paga en tiempo.</li>
+        <li><strong>Lo que significa una dirección propia en la tabla de rutas</strong>, visto en el Laboratorio 01.</li>
+      </ul>
+    </section>
+
+<section id="s5">
+      <h2>5. Procedimiento reproducible</h2>
+
+      <h4>Paso 1 · Contexto previo</h4>
+      <pre class="cmd"><code>ip neigh
+ip -br addr
+ip route get 192.168.56.103</code></pre>
+      <p>Se registra el vecindario y se vuelve a confirmar que el destino se resuelve por <code>lo</code>.</p>
+
+      <h4>Paso 2 · Referencia humana con ping</h4>
+      <pre class="cmd"><code>ping -c 4 -W 2 192.168.56.103</code></pre>
+
+      <h4>Paso 3 · Los ocho mecanismos de descubrimiento</h4>
+      <pre class="cmd"><code>scp scripts/lab02_descubrimiento.sh mg@192.168.56.103:~/labenv/scripts/
+ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab02_descubrimiento.sh' ~/evidencias/lab02/e02_descubrimiento.typescript"</code></pre>
+
+      <h4>Paso 4 · Lectura del motivo en cada XML</h4>
+      <pre class="cmd"><code>ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab02_inspect.sh' ~/evidencias/lab02/e02b_motivos_xml.typescript"</code></pre>
+
+      <h4>Paso 5 · Coste DNS y verificación con verbose</h4>
+      <pre class="cmd"><code>ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab02b_dns_y_probe.sh' ~/evidencias/lab02/e02c_dns_y_probe.typescript"</code></pre>
+
+      <h4>Paso 6 · Recogida de evidencias</h4>
+      <pre class="cmd"><code>scp -r mg@192.168.56.103:~/evidencias/lab02 evidencias/</code></pre>
+    </section>
+
+<section id="s6">
+      <h2>6. Comandos exactos y explicación de sus opciones</h2>
+
+      <pre class="cmd"><span class="cmd-label">Eco ICMP</span><code>nmap -sn -Ps -oA icmp_echo 192.168.56.103</code></pre>
+      <ul>
+        <li><code>-sn</code> detiene el trabajo después del descubrimiento, no abre puertos.</li>
+        <li><code>-Ps</code> envía un paquete ICMP de eco, el equivalente a <code>ping</code>.</li>
+        <li><code>-oA</code> escribe de una vez los tres formatos, <code>nmap</code>, <code>xml</code> y <code>gnmap</code>, con la misma base de nombre.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Marca de tiempo ICMP</span><code>nmap -sn -PP -oA icmp_ts 192.168.56.103</code></pre>
+      <ul>
+        <li><code>-PP</code> usa el mensaje ICMP tipo 13. Suele atravesar filtros que dejan pasar el eco y descartan otros tipos.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">TCP SYN y TCP ACK</span><code>nmap -sn -PS22,80,443,21 -oA tcp_syn 192.168.56.103
+nmap -sn -PA22,80,443 -oA tcp_ack 192.168.56.103</code></pre>
+      <ul>
+        <li><code>-PS</code> envía un SYN al puerto indicado. Una respuesta <code>SYN-ACK</code> implica host arriba y puerto abierto, un <code>RST</code> implica host arriba y puerto cerrado.</li>
+        <li><code>-PA</code> envía un ACK. Al llegar sin conexión previa, un firewall que hace seguimiento de estado responde con <code>RST</code>, lo que revela el host.</li>
+        <li>Los números después de la opción son puertos, se pueden listar separados por comas.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">UDP y ARP</span><code>nmap -sn -PU53,161,123 -oA udp_ping 192.168.56.103
+nmap -sn -PR -oA arp_ping 192.168.56.103</code></pre>
+      <ul>
+        <li><code>-PU</code> manda un paquete UDP hacia un puerto probable. Un mensaje ICMP de tipo 3 revela el host.</li>
+        <li><code>-PR</code> usa ARP en lugar de IP. Solo funciona en la subred local y es el mecanismo más difícil de filtrar en una red cableada.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Combinación y verificación</span><code>nmap -sn -PS22,80,443 -Ps -PP -oA mixto 192.168.56.103
+nmap -sn -n -Ps -vv 192.168.56.103
+grep -s '&lt;status ' icmp_echo.xml</code></pre>
+      <ul>
+        <li><code>-n</code> desactiva la resolución de nombres, tanto la inversa como la directa.</li>
+        <li><code>-vv</code> aumenta el detalle e imprime el contador de paquetes enviados y recibidos.</li>
+        <li>El atributo <code>reason</code> del XML es el campo que indica por qué Nmap concluyó que el host está arriba.</li>
+      </ul>
+    </section>
+
+<section id="s7">
+      <h2>7. Resultados observados</h2>
+
+      <h3>7.1 Contexto de red</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab02/e02_descubrimiento.typescript</span><span>sección [2.0]</span></div>
+        <pre><code>$ ip neigh
+192.168.56.100 dev eth2 lladdr 08:00:27:5d:ad:d3 STALs
+192.168.56.1   dev eth2 lladdr 0a:00:27:00:00:03 DsLAY
+
+$ ip route get 192.168.56.103
+local 192.168.56.103 dev lo src 192.168.56.103 uid 1001
+    cache &lt;local&gt;</code></pre>
+        <figcaption><strong>Figura 1.</strong> Vecindario ARP visible y resolución de ruta hacia el objetivo. Evidencia, <code>e02_descubrimiento.typescript</code> sección [2.0].</figcaption>
+      </div>
+      <p>Hay dos vecinos vivos en la red host-only. <strong>Ninguno se escaneó</strong>, quedan fuera de alcance. El dato relevante para este laboratorio es que la ruta hacia el objetivo termina en <code>lo</code>.</p>
+
+      <h3>7.2 Los ocho mecanismos, todos con respuesta</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab02/*.nmap</span><span>salidas -oA</span></div>
+        <pre><code># ... -sn -Ps ...          -> Host is up.   (4.68 s)
+# ... -sn -PP ...          -> Host is up.   (0.52 s)
+# ... -sn -PS22,80,443,21  -> Host is up.   (4.51 s)
+# ... -sn -PA22,80,443     -> Host is up.   (4.57 s)
+# ... -sn -PU53,161,123    -> Host is up.   (1.01 s)
+# ... -sn -PR ...          -> Host is up.   (0.54 s)
+# ... -sn -PS,Ps,PP        -> Host is up.   (0.61 s)
+# ... 127.0.0.1            -> Host is up.   (0.01 s)</code></pre>
+        <figcaption><strong>Figura 2.</strong> Compilado de las ocho salidas <code>.nmap</code>. Evidencia completa en <code>evidencias/lab02/</code>.</figcaption>
+      </div>
+      <p>En pantalla el resultado es siempre el mismo, <code>Host is up</code>, y no hay ninguna línea de error. Leído así el laboratorio diría que los ocho mecanismos funcionan igual de bien, lo cual sería una conclusión falsa.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab02-mecanismos.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab02-mecanismos.png" alt="Pantalla con los mecanismos de descubrimiento ejecutados">
+        <figcaption><strong>Captura 1.</strong> Ejecución de los mecanismos de eco ICMP, marca de tiempo ICMP, TCP SYN, TCP ACK y UDP contra el mismo destino autorizado, con el tiempo que tardó cada uno.</figcaption>
+      </figure>
+
+      <h3>7.3 El motivo declarado en el XML</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab02/e02b_motivos_xml.typescript</span><span>las ocho lecturas</span></div>
+        <pre><code>===== icmp_echo =====
+&lt;host&gt;&lt;status state="up" reason="localhost-response" reason_ttl="0"/&gt;
+
+===== icmp_ts =====
+&lt;host&gt;&lt;status state="up" reason="localhost-response" reason_ttl="0"/&gt;
+
+===== tcp_syn =====
+&lt;host&gt;&lt;status state="up" reason="localhost-response" reason_ttl="0"/&gt;
+
+===== arp_ping =====
+&lt;host&gt;&lt;status state="up" reason="localhost-response" reason_ttl="0"/&gt;
+
+===== loopback =====
+&lt;host&gt;&lt;status state="up" reason="localhost-response" reason_ttl="0"/&gt;</code></pre>
+        <figcaption><strong>Figura 3.</strong> Atributo <code>reason</code> de los XML generados. Evidencia, <code>e02b_motivos_xml.typescript</code>.</figcaption>
+      </div>
+      <p>Los ocho archivos dicen exactamente lo mismo, <code>localhost-response</code>. No es el motivo <code>echo-reply</code>, ni <code>synack</code>, ni <code>arp-response</code>. El valor dice que la respuesta vino del propio equipo.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab02-motivos.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab02-motivos.png" alt="Pantalla con el motivo declarado en los archivos XML">
+        <figcaption><strong>Captura 2.</strong> Atributo <code>reason</code> leído en los archivos XML de los ocho mecanismos. Los ocho declaran <code>localhost-response</code> en lugar de un motivo de red.</figcaption>
+      </figure>
+
+      <h3>7.4 Verificación con detalle verboso</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab02/e02c_dns_y_probe.typescript</span><span>secciones [D] y [s]</span></div>
+        <pre><code>$ nmap -sn -n -Ps -vv 192.168.56.103
+Host is up, received localhost-response.
+           Raw packets sent: 0 (0B) | Rcvd: 0 (0B)
+
+$ nmap -sn -n -PS22,80 -vv 192.168.56.103
+Host is up, received localhost-response.
+           Raw packets sent: 0 (0B) | Rcvd: 0 (0B)</code></pre>
+        <figcaption><strong>Figura 4.</strong> Contador de paquetes con <code>-vv</code>, tanto para sonda ICMP como para sonda TCP SYN. Evidencia, <code>e02c_dns_y_probe.typescript</code>.</figcaption>
+      </div>
+      <p>Esta es la prueba decisiva del laboratorio. <strong>Paquetes enviados, cero.</strong> Nmap detectó que la dirección pertenece al propio equipo y no llegó a emitir el probe.</p>
+
+      <h3>7.5 Coste de la resolución DNS</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab02/e02c_dns_y_probe.typescript</span><span>secciones [A] y [B]</span></div>
+        <pre><code>$ cat /etc/resolv.conf
+# Generated by NetworkManager
+nameserver 192.168.18.2
+
+$ time nmap -sn -Ps -oA pe_con_dns 192.168.56.103
+Nmap done: 1 IP address (1 host up) scanned in 3.62 seconds
+  -&gt; wall clock con DNS: 3.73 s
+
+$ time nmap -sn -n -Ps -oA pe_sin_dns 192.168.56.103
+Nmap done: 1 IP address (1 host up) scanned in 0.01 seconds
+  -&gt; wall clock sin DNS: 0.12 s</code></pre>
+        <figcaption><strong>Figura 5.</strong> Misma prueba con y sin resolución de nombres. Evidencia, <code>e02c_dns_y_probe.typescript</code> secciones [A] y [B].</figcaption>
+      </div>
+      <p>Misma opción, mismo destino, misma versión de Nmap. Con DNS tarda 3,73 s y sin DNS tarda 0,12 s. El servidor declarado, <code>192.168.18.2</code>, no responde desde este entorno y cada intento se paga con un tiempo de espera fijo. Cerca de 3,6 segundos de la ejecución no son escaneo, son una consulta que no devuelve nada.</p>
+    </section>
+
+<figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab02-dns.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab02-dns.png" alt="Pantalla con el coste del DNS y la verificacion con -vv">
+        <figcaption><strong>Captura 3.</strong> Comparación del mismo comando con y sin resolución de nombres, la declaración del servidor DNS del equipo y el contador de paquetes crudos con <code>-vv</code>, que informa cero paquetes enviados.</figcaption>
+      </figure>
+
+    <section id="s8">
+      <h2>8. Evidencias vinculadas</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 2. Archivos de evidencia del Laboratorio 02.</caption>
+          <thead><tr><th>Archivo</th><th>Tipo</th><th>Contenido</th></tr></thead>
+          <tbody>
+            <tr><td><a href="../evidencias/lab02/e02_descubrimiento.typescript">e02_descubrimiento.typescript</a></td><td>Transcripción de terminal</td><td>Contexto de red, ping de referencia y los ocho mecanismos de descubrimiento</td></tr>
+            <tr><td><a href="../evidencias/lab02/e02b_motivos_xml.typescript">e02b_motivos_xml.typescript</a></td><td>Transcripción de terminal</td><td>Lectura del atributo <code>reason</code> en los ocho XML</td></tr>
+            <tr><td><a href="../evidencias/lab02/e02c_dns_y_probe.typescript">e02c_dns_y_probe.typescript</a></td><td>Transcripción de terminal</td><td>Configuración DNS, coste con y sin <code>-n</code>, verificación con <code>-vv</code></td></tr>
+            <tr><td><code>icmp_echo, icmp_ts, tcp_syn, tcp_ack, udp_ping, arp_ping, mixto, loopback</code></td><td><code>.nmap</code>, <code>.xml</code>, <code>.gnmap</code></td><td>Salidas <code>-oA</code> de cada mecanismo, 24 archivos</td></tr>
+            <tr><td><code>pe_con_dns, pe_sin_dns</code></td><td><code>.nmap</code>, <code>.xml</code>, <code>.gnmap</code></td><td>Par con y sin resolución de nombres, 6 archivos</td></tr>
+            <tr><td><a href="../scripts/lab02_descubrimiento.sh">scripts/lab02_descubrimiento.sh</a></td><td>Script de ejecución</td><td>Procedimiento de los ocho mecanismos</td></tr>
+            <tr><td><a href="../scripts/lab02_inspect.sh">scripts/lab02_inspect.sh</a></td><td>Script de inspección</td><td>Extracción del motivo desde los XML</td></tr>
+            <tr><td><a href="../scripts/lab02b_dns_y_probe.sh">scripts/lab02b_dns_y_probe.sh</a></td><td>Script de verificación</td><td>Comparación DNS y prueba verbosa</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <span class="tag">Formato de la evidencia</span>
+        <p>Los archivos <code>.xml</code> son la fuente primaria del hallazgo, porque es allí donde aparece <code>reason</code>. Las transcripciones conservan la sesión completa con su cabecera, su pie y su código de salida.</p>
+      </div>
+    </section>
+
+<section id="s9">
+      <h2>9. Interpretación técnica</h2>
+
+      <p><strong>Evidencia.</strong> Los ocho XML declaran <code>reason="localhost-response"</code> y <code>-vv</code> informa <code>Raw packets sent 0 (0B)</code>.</p>
+      <p><strong>Interpretación.</strong> Nmap comprueba la dirección de destino antes de elegir una sonda. Si la dirección es local, la resuelve por el bucle de trabajo y da el host por arriba sin gastar un paquete. Por lo tanto <strong>ninguno de los ocho mecanismos fue puesto a prueba aquí</strong>. Que los ocho coincidan no demuestra que sean equivalentes, demuestra que los ocho tomaron el mismo atajo.</p>
+
+      <p><strong>Evidencia.</strong> El Laboratorio 03, con <code>-sS</code> sobre la misma dirección, registra <code>Raw packets sent 2 (88B)</code>.</p>
+      <p><strong>Interpretación.</strong> El atajo depende del modo de escaneo. En descubrimiento Nmap resuelve el destino y evita la sonda, mientras que al escanear puertos sí emite paquetes. Interpretar el cero como un fallo de la herramienta habría sido un error.</p>
+
+      <p><strong>Evidencia.</strong> Con DNS 3,73 s y sin DNS 0,12 s, con <code>nameserver 192.168.18.2</code> declarado.</p>
+      <p><strong>Interpretación.</strong> Nmap resuelve nombres antes de escanear aunque el destino sea una dirección numérica, porque puede haber nombres asociados. El servidor DNS no responde desde la host-only, así que cada ejecución absorbe un tiempo de espera. En un escaneo con cientos de hosts el efecto se multiplica.</p>
+
+      <p><strong>Evidencia.</strong> <code>ip neigh</code> muestra dos vecinos y la ruta al objetivo es <code>dev lo</code>.</p>
+      <p><strong>Interpretación.</strong> Existe un vecindario real que este laboratorio no tocó. El descubrimiento que sí habría salido por la tarjeta de red sería contra esas direcciones, y no se hizo porque no estaban autorizadas.</p>
+    </section>
+
+<section id="s10">
+      <h2>10. Implicación defensiva y recomendaciones</h2>
+      <ul>
+        <li><strong>Leer el <code>reason</code> y no solo la línea de resumen.</strong> Un informe de inventario que repita <code>Host is up</code> sin el motivo puede estar listando hosts que nunca respondieron.</li>
+        <li><strong>Usar <code>-n</code> cuando el objetivo sea una dirección numérica conocida.</strong> Elimina una dependencia de un servicio que puede estar caído y hace el escaneo reproducible en tiempo.</li>
+        <li><strong>Vigilar la configuración DNS de los equipos de análisis.</strong> Un servidor que no responde no falla ruidosamente, solo encarece cada ejecución.</li>
+        <li><strong>Registrar el vecindario visible sin escanearlo.</strong> Es información legítima que aparece de forma pasiva y que conviene documentar, separando lo observado de lo probado.</li>
+        <li><strong>Comparar siempre contra una prueba de control.</strong> Aquí la comparación con <code>-n</code> y con <code>-vv</code> fue lo que convirtió una fila de resultados en un hallazgo interpretable.</li>
+      </ul>
+      <div class="note">
+        <span class="tag">Límite del hallazgo</span>
+        <p><code>localhost-response</code> no es una vulnerabilidad y el tiempo de espera DNS no es un fallo de seguridad. Es una característica del entorno que afecta a la calidad del dato, y ese es el motivo por el que se documenta.</p>
+      </div>
+    </section>
+
+<section id="s11">
+      <h2>11. Errores, limitaciones y puntos pendientes</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 3. Limitaciones reconocidas del Laboratorio 02.</caption>
+          <thead><tr><th>#</th><th>Limitación</th><th>Impacto</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>L1</td>
+              <td>No se pudo reproducir un host que no responda, porque el único destino autorizado es el propio equipo</td>
+              <td>No hay contraste positivo contra negativo dentro del alcance</td>
+              <td><strong>Declarado</strong>. No se escaneó nadie más para conseguirlo</td>
+            </tr>
+            <tr>
+              <td>L2</td>
+              <td>Los ocho mecanismos terminan en el mismo atajo local</td>
+              <td>La comparación no mide la efectividad real de cada sonda</td>
+              <td>Declarado en la sección 9</td>
+            </tr>
+            <tr>
+              <td>L3</td>
+              <td>El servidor DNS <code>192.168.18.2</code> no responde desde la host-only</td>
+              <td>El coste medido es el de un fallo, no el de una consulta satisfactoria</td>
+              <td>Anotado. El dato sigue siendo válido para este entorno</td>
+            </tr>
+            <tr>
+              <td>L4</td>
+              <td>La primera versión del script de comprobación adicional falló en la línea 1 por un carácter de ordenamiento UTF-8 introducido por el editor del anfitrión</td>
+              <td>La transcripción inicial mostraba un error de intérprete antes de empezar</td>
+              <td><strong>Corregido</strong>. Se reescribió el script y se volvió a ejecutar, la evidencia vigente está limpia</td>
+            </tr>
+            <tr>
+              <td>L5</td>
+              <td>Ruta por <code>lo</code>, heredada del Laboratorio 01</td>
+              <td>Sin latencia de red ni elementos intermedios</td>
+              <td>Declarado en todos los laboratorios</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>El punto L1 es el más importante de cara a una entrevista. Conseguir un resultado negativo habría exigido escanear una dirección que no estaba autorizada, y <strong>la integridad del alcance vale más que la completitud de la tabla</strong>. La comparación queda pendiente y así se declara.</p>
+    </section>
+
+<section id="s12">
+      <h2>12. Conclusión</h2>
+      <p>El laboratorio ejecutó ocho mecanismos de descubrimiento y los ocho declararon que el host está arriba. La lectura del XML muestra que los ocho responden con <code>localhost-response</code> y que <code>-vv</code> registra cero paquetes enviados, así que el resultado correcto es que <strong>el descubrimiento no se probó</strong>, solo se observó el atajo local de Nmap.</p>
+      <p>La segunda mitad del laboratorio sí arroja una cifra accionable. Con la resolución de nombres activa la misma prueba tarda 3,73 s y con <code>-n</code> tarda 0,12 s, un diferencial de unos 3,6 segundos causado por un servidor DNS declarado que no responde.</p>
+      <p>Queda pendiente, y así se anota, la comparación contra un host sin respuesta. No se consiguió porque habría exigido salirse del alcance autorizado.</p>
+    </section>
+
+<section id="s13">
+      <h2>13. Preguntas de entrevista sobre esta práctica</h2>
+      <ol>
+        <li><strong>Los ocho métodos funcionaron, ¿cuál es el mejor?</strong> No se puede responder con este laboratorio. Los ocho cayeron en el mismo atajo local, así que no se midió ninguno. ssa es la respuesta correcta.</li>
+        <li><strong>¿Cómo Habría que un escaneo no está mandando paquetes?</strong> Con <code>-vv</code>, que imprime <code>Raw packets sent</code>, y leyendo el <code>reason</code> del XML. En este caso el valor fue <code>localhost-response</code>.</li>
+        <li><strong>¿Por qué <code>reason</code> y no la línea <code>Host is up</code>?</strong> Porque la línea de resumen solo comunica el resultado final. El motivo indica la evidencia sobre la que se apoyó, que es lo que permite auditar el resultado.</li>
+        <li><strong>¿Qué harías si el DNS se come la mitad del tiempo de escaneo?</strong> Añadir <code>-n</code> cuando el destino sea numérico, revisar la configuración del analista y separar el tiempo de escaneo del tiempo de resolución al reportar.</li>
+        <li><strong>Viendo dos vecinos en <code>ip neigh</code>, ¿los escaneaste?</strong> No. Estaban fuera de alcance. Que aparezcan en una tabla de vecinos no otorga autorización.</li>
+        <li><strong>¿Es <code>localhost-response</code> un problema de seguridad?</strong> No. Es una característica del entorno. El problema aparecería si un informe los presentara como hosts verificados.</li>
+        <li><strong>¿Por qué guardaste tres formatos con <code>-oA</code>?</strong> Porque el XML es el único que conserva el motivo y los metadatos de ejecución, el <code>gnmap</code> es cómodo para procesar por lote y el <code>nmap</code> es el legible por una persona.</li>
+      </ol>
+    </section>
+
+<section id="s14">
+      <h2>14. Referencias oficiales utilizadas</h2>
+      <ul>
+        <li>Nmap, descubrimiento de hosts. <a href="https://nmap.org/book/man-host-diEcovery.html">nmap.org/book/man-host-diEcovery.html</a></li>
+        <li>Nmap Reference Guide, opciones de escaneo. <a href="https://nmap.org/book/man.html">nmap.org/book/man.html</a></li>
+        <li>Nmap, formatos de salida. <a href="https://nmap.org/book/output-formats.html">nmap.org/book/output-formats.html</a></li>
+        <li>ICMP, RFC 792. <a href="https://www.rfc-editor.org/rfc/rfc792">rfc-editor.org/rfc/rfc792</a></li>
+        <li>ARP, RFC 826. <a href="https://www.rfc-editor.org/rfc/rfc826">rfc-editor.org/rfc/rfc826</a></li>
+        <li>resolv.conf(5), página de manual. <a href="https://man7.org/linux/man-pages/man5/resolv.conf.5.html">man7.org/linux/man-pages/man5/resolv.conf.5.html</a></li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Enlaces del pie">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../pdf/informe-general.pdf">Informe general (PDF)</a>
+      <a href="../pdf/ficha-proyecto.pdf">Ficha del proyecto (PDF)</a>
+    </nav>
+    <p>Portafolio académico de laboratorios de ciberseguridad. Los resultados corresponden a ejecuciones reales sobre una máquina virtual propia. Los pendientes están marcados como tales.</p>
+    <p><a href="mailto:magdalenagonzalezcorreo@gmail.com">magdalenagonzalezcorreo@gmail.com</a> · <a href="https://www.linkedin.com/in/magdalenagonzalezpanama/?locale=es">LinkedIn de Magdalena Sarit González Bustillo</a></p>
+  </div>
+</footer>
+
+<script src="../js/main.js" defer></script>
+</body>
+</html>

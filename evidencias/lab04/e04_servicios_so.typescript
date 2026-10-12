@@ -1,0 +1,234 @@
+Script started on 2026-10-06 15:12:06-04:00 [COMMAND="bash ~/labenv/scripts/lab04_servicios_so.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 04 - SERVICIOS Y SISTEMA OPERATIVO
+ Fecha: 2026-10-06T15:12:06-04:00
+ Objetivo autorizado: 192.168.56.103
+ Nmap: Nmap version 7.99 ( https://nmap.org )
+ Salidas: /home/mg/evidencias/lab04 (formato -oA)
+==================================================================
+
+--- [4.1] (i) RESPUESTA OBSERVADA: banner FTP crudo ----------------
+$ timeout 4 bash -c 'exec 3<>/dev/tcp/192.168.56.103/21; head -1 <&3'
+220 (vsFTPd 3.0.5)
+
+--- [4.2] (i) RESPUESTA OBSERVADA: banner SSH crudo -----------------
+$ timeout 4 bash -c 'exec 3<>/dev/tcp/192.168.56.103/22; head -1 <&3'
+SSH-2.0-OpenSSH_10.4p1 Debian-4
+
+--- [4.3] (i) RESPUESTA OBSERVADA: cabeceras HTTP --------------------
+$ curl -sSI --max-time 5 http://192.168.56.103:8080/
+HTTP/1.0 200 OK
+[1mServer[0m: SimpleHTTP/0.6 Python/3.13.14
+[1mDate[0m: Tue, 06 Oct 2026 19:12:06 GMT
+[1mContent-type[0m: text/html; charset=utf-8
+[1mContent-Length[0m: 386
+
+
+--- [4.4] (i) RESPUESTA OBSERVADA: certificado TLS -------------------
+$ timeout 6 openssl s_client -connect 192.168.56.103:8443 -showcerts </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates
+subject=CN=lab.magalena.local, O=Laboratorio academico local, C=PA
+issuer=CN=lab.magalena.local, O=Laboratorio academico local, C=PA
+notBefore=Oct  6 18:31:13 2026 GMT
+notAfter=Nov  5 18:31:13 2026 GMT
+
+--- [4.5] (ii) IDENTIFICACION DE SERVICIOS POR NMAP (-sV) -----------
+$ nmap -sV --version-intensity 7 -p 21,22,8080,8443 --reason -oA /home/mg/evidencias/lab04/servicios 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:12 -0400
+Stats: 0:00:00 elapsed; 0 hosts completed (0 up), 0 undergoing Host Discovery
+Parallel DNS resolution of 1 host. Timing: About 0.00% done
+Nmap scan report for 192.168.56.103
+Host is up, received localhost-response (0.000094s latency).
+
+PORT     STATE SERVICE       REASON         VERSION
+21/tcp   open  ftp           syn-ack ttl 64 vsftpd 3.0.5
+22/tcp   open  ssh           syn-ack ttl 64 OpenSSH 10.4p1 Debian 4 (protocol 2.0)
+8080/tcp open  http          syn-ack ttl 64 SimpleHTTPServer 0.6 (Python 3.13.14)
+8443/tcp open  ssl/https-alt syn-ack ttl 64
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port8443-TCP:V=7.99%T=SSL%I=7%D=10/6%Time=6AC54816%P=x86_64-pc-linux-gn
+SF:u%r(GetRequest,28A0,"HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/ht
+SF:ml\r\n\r\n<HTML><BODY\x20BGCOLOR=\"#ffffff\">\n<pre>\n\ns_server\x20-ac
+SF:cept\x208443\x20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/l
+SF:abenv/lab\.key\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renego
+SF:tiation\.\nCiphers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x
+SF:20\x20\x20\x20:TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x
+SF:20\x20:TLS_CHACHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_A
+SF:ES_128_GCM_SHA256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-A
+SF:ES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA
+SF:384\x20TLSv1\.2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2
+SF:\x20\x20\x20\x20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:
+SF:ECDHE-ECDSA-CHACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-C
+SF:HACHA20-POLY1305\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\
+SF:x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLS
+SF:v1\.2\x20\x20\x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x2
+SF:0\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\
+SF:x20\x20\x20\x20:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\
+SF:x20:DHE-DSS-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA
+SF:256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-")%r(FourOhFourRequest
+SF:,28A0,"HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/html\r\n\r\n<HTM
+SF:L><BODY\x20BGCOLOR=\"#ffffff\">\n<pre>\n\ns_server\x20-accept\x208443\x
+SF:20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/labenv/lab\.key
+SF:\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renegotiation\.\nCip
+SF:hers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x20\x20\x20\x20
+SF::TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x20\x20:TLS_CHA
+SF:CHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_AES_128_GCM_SHA
+SF:256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-GCM-SHA3
+SF:84\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA384\x20TLSv1\.
+SF:2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x
+SF:20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-CH
+SF:ACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-CHACHA20-POLY13
+SF:05\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\x20\nTLSv1\.2\
+SF:x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLSv1\.2\x20\x20\
+SF:x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x20\nTLSv1\.2\x2
+SF:0\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x2
+SF:0:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\x20:DHE-DSS-AR
+SF:IA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA256-GCM-SHA384
+SF:\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-");
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 164.61 seconds
+
+--- [4.6] (ii) DETECCION DE SISTEMA OPERATIVO (-O) sobre el bucle ---
+$ nmap -O --reason -p 1-100 -oA /home/mg/evidencias/lab04/os_loopback 127.0.0.1
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:14 -0400
+Nmap scan report for localhost (127.0.0.1)
+Host is up, received localhost-response (0.00012s latency).
+Not shown: 98 closed tcp ports (reset)
+PORT   STATE SERVICE REASON
+21/tcp open  ftp     syn-ack ttl 64
+22/tcp open  ssh     syn-ack ttl 64
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.99%E=4%D=10/6%OT=21%CT=1%CU=38947%PV=Y%DS=0%DC=L%G=Y%TM=6AC548B
+OS:9%P=x86_64-pc-linux-gnu)SEQ(SP=109%GCD=1%ISR=10A%TI=Z%CI=Z%II=I%TS=1F)SE
+OS:Q(SP=FB%GCD=1%ISR=108%TI=Z%CI=Z%II=I%TS=21)SEQ(SP=FD%GCD=1%ISR=10A%TI=Z%
+OS:CI=Z%II=I%TS=21)SEQ(SP=FE%GCD=1%ISR=103%TI=Z%CI=Z%II=I%TS=22)SEQ(SP=FF%G
+OS:CD=1%ISR=106%TI=Z%CI=Z%II=I%TS=21)OPS(O1=MFFD7ST11NW9%O2=MFFD7ST11NW9%O3
+OS:=MFFD7NNT11NW9%O4=MFFD7ST11NW9%O5=MFFD7ST11NW9%O6=MFFD7ST11)WIN(W1=FFCB%
+OS:W2=FFCB%W3=FFCB%W4=FFCB%W5=FFCB%W6=FFCB)ECN(R=Y%DF=Y%T=40%W=FFD7%O=MFFD7
+OS:NNSNW9%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R
+OS:=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=
+OS:AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=
+OS:40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID
+OS:=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)
+
+Network Distance: 0 hops
+
+OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 13.30 seconds
+
+--- [4.7] (ii) DETECCION DE SISTEMA OPERATIVO (-O) sobre la IP eth2 --
+$ nmap -O --reason -p 1-100 -oA /home/mg/evidencias/lab04/os_target 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:15 -0400
+Nmap scan report for 192.168.56.103
+Host is up, received localhost-response (0.00018s latency).
+Not shown: 98 filtered tcp ports (no-response)
+PORT   STATE SERVICE REASON
+21/tcp open  ftp     syn-ack ttl 64
+22/tcp open  ssh     syn-ack ttl 64
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Aggressive OS guesses: Linux 2.6.32 (96%), Linux 5.0 - 6.2 (96%), Linux 6.8 (96%), Linux 5.9 (95%), HP P2000 G3 NAS device (92%), Linux 3.7 - 4.19 (91%), Linux 5.10 - 5.11 (91%), Linux 5.4 - 5.15 (91%), Linux 6.6 (91%), Linux 3.8 - 3.9 (91%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 0 hops
+
+OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 11.27 seconds
+
+--- [4.8] (ii) Deteccion de SO y servicios a la vez -----------------
+$ nmap -sV -O --version-intensity 5 -p 21,22,8080,8443 -oA /home/mg/evidencias/lab04/servicios_y_so 192.168.56.103
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-10-06 15:15 -0400
+Nmap scan report for 192.168.56.103
+Host is up (0.00016s latency).
+
+PORT     STATE SERVICE        VERSION
+21/tcp   open  ftp            vsftpd 3.0.5
+22/tcp   open  ssh            OpenSSH 10.4p1 Debian 4 (protocol 2.0)
+8080/tcp open  http           SimpleHTTPServer 0.6 (Python 3.13.14)
+8443/tcp open  ssl/https-alt?
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port8443-TCP:V=7.99%T=SSL%I=5%D=10/6%Time=6AC548D6%P=x86_64-pc-linux-gn
+SF:u%r(GetRequest,28A0,"HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/ht
+SF:ml\r\n\r\n<HTML><BODY\x20BGCOLOR=\"#ffffff\">\n<pre>\n\ns_server\x20-ac
+SF:cept\x208443\x20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/l
+SF:abenv/lab\.key\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renego
+SF:tiation\.\nCiphers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x
+SF:20\x20\x20\x20:TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x
+SF:20\x20:TLS_CHACHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_A
+SF:ES_128_GCM_SHA256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-A
+SF:ES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA
+SF:384\x20TLSv1\.2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2
+SF:\x20\x20\x20\x20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:
+SF:ECDHE-ECDSA-CHACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-C
+SF:HACHA20-POLY1305\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\
+SF:x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLS
+SF:v1\.2\x20\x20\x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x2
+SF:0\nTLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\
+SF:x20\x20\x20\x20:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\
+SF:x20:DHE-DSS-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA
+SF:256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-")%r(FourOhFourRequest
+SF:,28A0,"HTTP/1\.0\x20200\x20ok\r\nContent-type:\x20text/html\r\n\r\n<HTM
+SF:L><BODY\x20BGCOLOR=\"#ffffff\">\n<pre>\n\ns_server\x20-accept\x208443\x
+SF:20-cert\x20/home/mg/labenv/lab\.crt\x20-key\x20/home/mg/labenv/lab\.key
+SF:\x20-www\x20\nThis\x20TLS\x20version\x20forbids\x20renegotiation\.\nCip
+SF:hers\x20supported\x20in\x20s_server\x20binary\nTLSv1\.3\x20\x20\x20\x20
+SF::TLS_AES_256_GCM_SHA384\x20\x20\x20\x20TLSv1\.3\x20\x20\x20\x20:TLS_CHA
+SF:CHA20_POLY1305_SHA256\x20\nTLSv1\.3\x20\x20\x20\x20:TLS_AES_128_GCM_SHA
+SF:256\x20\x20\x20\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-AES256-GCM-SHA3
+SF:84\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-AES256-GCM-SHA384\x20TLSv1\.
+SF:2\x20\x20\x20\x20:DHE-DSS-AES256-GCM-SHA384\x20\nTLSv1\.2\x20\x20\x20\x
+SF:20:DHE-RSA-AES256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:ECDHE-ECDSA-CH
+SF:ACHA20-POLY1305\x20\nTLSv1\.2\x20\x20\x20\x20:ECDHE-RSA-CHACHA20-POLY13
+SF:05\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-CHACHA20-POLY1305\x20\nTLSv1\.2\
+SF:x20\x20\x20\x20:ECDHE-ECDSA-AES256-CCM\x20\x20\x20\x20TLSv1\.2\x20\x20\
+SF:x20\x20:DHE-RSA-AES256-CCM\x20\x20\x20\x20\x20\x20\x20\x20\nTLSv1\.2\x2
+SF:0\x20\x20\x20:ECDHE-ECDSA-ARIA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x2
+SF:0:ECDHE-ARIA256-GCM-SHA384\x20\x20\nTLSv1\.2\x20\x20\x20\x20:DHE-DSS-AR
+SF:IA256-GCM-SHA384\x20TLSv1\.2\x20\x20\x20\x20:DHE-RSA-ARIA256-GCM-SHA384
+SF:\x20\nTLSv1\.2\x20\x20\x20\x20:ADH-");
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Aggressive OS guesses: Linux 2.6.32 (96%), Linux 5.0 - 6.2 (96%), Linux 6.8 (95%), Linux 5.9 (94%), HP P2000 G3 NAS device (92%), Linux 3.7 - 4.19 (91%), Linux 3.19 - 4.4 (91%), Linux 5.10 - 5.11 (91%), Linux 5.4 - 5.15 (91%), Linux 6.6 (91%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 0 hops
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 87.29 seconds
+
+--- [4.9] Versiones concretas declaradas por -sV, sin interpretar ---
+  21/tcp   open  ftp           syn-ack ttl 64 vsftpd 3.0.5
+  22/tcp   open  ssh           syn-ack ttl 64 OpenSSH 10.4p1 Debian 4 (protocol 2.0)
+  8080/tcp open  http          syn-ack ttl 64 SimpleHTTPServer 0.6 (Python 3.13.14)
+  8443/tcp open  ssl/https-alt syn-ack ttl 64
+
+--- [4.10] Archivos de paquete del SO (identidad real, no estimada) --
+$ systemd-detect-virt ; cat /etc/os-release | head -3 ; uname -r
+oracle
+PRETTY_NAME="Kali GNU/Linux Rolling"
+NAME="Kali GNU/Linux"
+VERSION_ID="2026.3"
+7.1.5+kali-amd64
+
+--- [4.11] Ficheros generados ---------------------------------------
+total 88
+drwxrwxr-x 2 mg mg  4096 Oct  6 15:15 .
+drwx------ 8 mg mg  4096 Oct  6 15:12 ..
+-rw-rw-r-- 1 mg mg 12288 Oct  6 15:16 e04_servicios_so.typescript
+-rw-rw-r-- 1 mg mg   432 Oct  6 15:15 os_loopback.gnmap
+-rw-rw-r-- 1 mg mg  1620 Oct  6 15:15 os_loopback.nmap
+-rw-rw-r-- 1 mg mg  5469 Oct  6 15:15 os_loopback.xml
+-rw-rw-r-- 1 mg mg   429 Oct  6 15:15 os_target.gnmap
+-rw-rw-r-- 1 mg mg  1018 Oct  6 15:15 os_target.nmap
+-rw-rw-r-- 1 mg mg  4417 Oct  6 15:15 os_target.xml
+-rw-rw-r-- 1 mg mg   542 Oct  6 15:14 servicios.gnmap
+-rw-rw-r-- 1 mg mg  3931 Oct  6 15:14 servicios.nmap
+-rw-rw-r-- 1 mg mg  5168 Oct  6 15:14 servicios.xml
+-rw-rw-r-- 1 mg mg   577 Oct  6 15:16 servicios_y_so.gnmap
+-rw-rw-r-- 1 mg mg  4264 Oct  6 15:16 servicios_y_so.nmap
+-rw-rw-r-- 1 mg mg  8014 Oct  6 15:16 servicios_y_so.xml
+
+==================================================================
+ LABORATORIO 04 - FIN  2026-10-06T15:16:44-04:00
+==================================================================
+
+Script done on 2026-10-06 15:16:44-04:00 [COMMAND_EXIT_CODE="0"]

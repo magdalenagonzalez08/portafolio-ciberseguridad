@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio 01 · Entorno y alcance | Portafolio de ciberseguridad</title>
+<meta name="description" content="Laboratorio 01: caracterización del entorno de laboratorio virtual, interfaces de red, herramientas, alcance autorizado y comprobaciones de conectividad.">
+<script>
+(function(){try{var t=localStorage.getItem("tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Portafolio de <span>laboratorios</span></a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="../index.html#proyecto">Proyecto</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../index.html#metodologia">Metodología</a>
+      <a href="../index.html#recursos">Recursos</a>
+        <button class="theme-toggle" type="button" aria-label="Cambiar tema">☾</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Laboratorio 01 de 06 · Estado completado</p>
+      <h1>Entorno y alcance</h1>
+      <p class="lede">Caracterización del laboratorio virtual antes de tocar una sola herramienta de escaneo, qué máquina existe, cómo está cableada, qué versiones hay, qué está escuchando y qué direcciones quedan expresamente fuera de alcance.</p>
+    </div>
+  </div>
+
+  <div class="wrap section">
+
+    <nav class="toc" aria-label="Índice del informe">
+      <h2>Índice del informe</h2>
+      <ol>
+        <li><a href="#s1">Resumen para selección</a></li>
+        <li><a href="#s2">Objetivo técnico</a></li>
+        <li><a href="#s3">Entorno y alcance</a></li>
+        <li><a href="#s4">Conocimientos previos</a></li>
+        <li><a href="#s5">Procedimiento reproducible</a></li>
+        <li><a href="#s6">Comandos y opciones</a></li>
+        <li><a href="#s7">Resultados observados</a></li>
+        <li><a href="#s8">Evidencias vinculadas</a></li>
+        <li><a href="#s9">Interpretación técnica</a></li>
+        <li><a href="#s10">Implicación defensiva</a></li>
+        <li><a href="#s11">Errores y limitaciones</a></li>
+        <li><a href="#s12">Conclusión</a></li>
+        <li><a href="#s13">Preguntas de entrevista</a></li>
+        <li><a href="#s14">Referencias</a></li>
+      </ol>
+    </nav>
+
+<section id="s1">
+      <h2>1. Resumen para una persona de selección</h2>
+      <p>Antes de escanear nada, este laboratorio fija el perímetro. Sobre una máquina Kali Linux 2026.3 en VirtualBox se verificó desde dos fuentes independientes (el hipervisor y el propio sistema) cuál es cada interfaz de red, qué servicios están escuchando y qué direcciones quedan prohibidas. Solo una dirección está autorizada como objetivo, <strong>192.168.56.103</strong>, que es la propia máquina Kali.</p>
+      <p>El valor práctico que se muestra aquí no es aprender comandos, sino <strong>dejar por escrito el límite antes de actuar</strong>. Un inventario de activos, una lista de herramientas con versión exacta, comprobaciones de conectividad limitadas al alcance y una declaración explícita de lo que no se va a probar. Ese es el hábito que separa un escaneo autorizado de un escaneo indebido.</p>
+      <div class="note">
+        <span class="tag">Naturaleza del trabajo</span>
+        <p>Laboratorio académico ejecutado sobre una máquina virtual propia. Las ejecuciones se realizaron desde la estación de trabajo con acceso SSH a Kali y los resultados se conservan como transcripción de terminal auténtica. No hay experiencia profesional, clientes ni certificaciones involucradas.</p>
+      </div>
+    </section>
+
+<section id="s2">
+      <h2>2. Objetivo técnico</h2>
+      <ul>
+        <li>Identificar la máquina, el hipervisor y el sistema operativo de pruebas a partir de evidencia verificable, no por suposición.</li>
+        <li>Mapear interfaces de red, direccionamiento y rutas, cruzando la configuración del hipervisor con la vista del huésped.</li>
+        <li>Inventariar servicios escuchando y a qué procesos corresponden, reconociendo qué información exige privilegios.</li>
+        <li>Registrar herramientas y versiones exactas para que cualquier otro laboratorio sea reproducible.</li>
+        <li>Declarar el alcance autorizado y las prohibiciones antes de ejecutar el primer escaneo.</li>
+        <li>Comprobar conectividad únicamente dentro de ese alcance.</li>
+      </ul>
+    </section>
+
+<section id="s3">
+      <h2>3. Entorno y alcance</h2>
+
+      <h3>3.1 Máquinas participantes y funciones</h3>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 1. Elementos del laboratorio y su función.</caption>
+          <thead>
+            <tr><th>Elemento</th><th>Función</th><th>Dirección</th><th>Estado verificado</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Kali Linux (VM)</td>
+              <td>Equipo de pruebas y, en este laboratorio, también el objetivo autorizado</td>
+              <td><code>192.168.56.103</code></td>
+              <td><code>VMState="running"</code></td>
+            </tr>
+            <tr>
+              <td>Host Windows</td>
+              <td>Anfitrión con VirtualBox. Ejecuta el editor y recibe las evidencias</td>
+              <td><code>192.168.56.1</code> (host-only)</td>
+              <td>Fuera de alcance de pruebas</td>
+            </tr>
+            <tr>
+              <td>Resto de VMs del hipervisor</td>
+              <td>No participan</td>
+              <td>-</td>
+              <td><code>poweroff</code> o <code>saved</code>. Ninguna se encendió</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>En el hipervisor hay ocho máquinas definidas (<code>Linux Mint</code>, <code>Kali Linux</code>, <code>Windows 7</code>, <code>GNS3 VM</code>, <code>Linux Mint Ciber</code>, <code>Windows11-LAB</code>, <code>Parrot Security</code>, <code>Kali 2026</code>). En el momento de la captura <strong>solo <code>Kali Linux</code> estaba en ejecución</strong>, según <code>VBoxManage list runningvms</code>. Ninguna otra se arrancó para este trabajo.</p>
+
+      <h3>3.2 Interfaces y direccionamiento</h3>
+      <p>El modo de red <strong>no se dedujo del rango de direcciones</strong>. Se leyó la configuración desde el hipervisor y se cruzó con las direcciones MAC declaradas por el huésped.</p>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 2. Cruce hipervisor ↔ huésped por dirección MAC (Tabla 2 de la evidencia).</caption>
+          <thead>
+            <tr><th>NIC VirtualBox</th><th>Modo</th><th>MAC del hipervisor</th><th>Interfaz Linux</th><th>MAC del huésped</th><th>IPv4</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>NIC1</td><td><code>nat</code></td><td><code>080027DD07D7</code></td><td>eth0</td><td><code>08:00:27:dd:07:d7</code></td><td><code>10.0.2.15/24</code></td></tr>
+            <tr><td>NIC2</td><td><code>bridged</code></td><td><code>080027B0B577</code></td><td>eth1</td><td><code>08:00:27:b0:b5:77</code></td><td><strong>ninguna</strong></td></tr>
+            <tr><td>NIC3</td><td><code>hostonly</code></td><td><code>080027244BCF</code></td><td>eth2</td><td><code>08:00:27:24:4b:cf</code></td><td><code>192.168.56.103/24</code></td></tr>
+            <tr><td>NIC4-NIC8</td><td><code>none</code></td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="evidence">
+        <div class="evidence-head">
+          <span>evidencias/lab01/hypervisor_vboxmanage.txt</span>
+          <span>lectura desde el host</span>
+        </div>
+        <pre><code>name="Kali Linux"
+ostype="Linux 2.6 / 3.x / 4.x / 5.x (64-bit)"
+memory=4096
+cpus=7
+VMState="running"
+nic1="nat"
+macaddress1="080027DD07D7"
+nic2="bridged"
+macaddress2="080027B0B577"
+nic3="hostonly"
+macaddress3="080027244BCF"
+nic4="none"</code></pre>
+        <figcaption><strong>Figura 1.</strong> Fragmento de la configuración leída con <code>VBoxManage showvminfo "Kali Linux" --machinereadable</code> desde el host Windows. Evidencia completa en <code>evidencias/lab01/hypervisor_vboxmanage.txt</code>.</figcaption>
+      </figure>
+
+      <h3>3.3 Servicios del laboratorio</h3>
+      <p>El equipo arranca con dos servicios propios de la instalación, <strong>vsftpd en el puerto 21</strong> y <strong>sshd en el 22</strong>. Para que los laboratorios 03 a 05 tuvieran una superficie real que analizar, se añadieron dos servicios de prueba en puertos altos, lanzados como usuario normal (sin <code>sudo</code>) y retirables con un script.</p>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 3. Servicios escuchando tras la preparación del entorno.</caption>
+          <thead>
+            <tr><th>Puerto</th><th>Servicio</th><th>Proceso</th><th>Origen</th><th>Escucha</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>21/tcp</td><td>FTP</td><td><code>vsftpd</code> (root)</td><td>Preexistente (Kali)</td><td><code>*:21</code></td></tr>
+            <tr><td>22/tcp</td><td>SSH</td><td><code>sshd</code> (root)</td><td>Preexistente, canal de gestión</td><td><code>0.0.0.0:22</code></td></tr>
+            <tr><td>8080/tcp</td><td>HTTP</td><td><code>python3</code> (mg)</td><td><strong>Añadido por este proyecto</strong></td><td><code>0.0.0.0:8080</code></td></tr>
+            <tr><td>8443/tcp</td><td>HTTPS</td><td><code>openssl</code> (mg)</td><td><strong>Añadido por este proyecto</strong></td><td><code>*:8443</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <span class="tag">Transparencia</span>
+        <p>Los puertos 8080 y 8443 <strong>no existían en el equipo</strong>. Los creó <code>scripts/setup_lab_env.sh</code> con un certificado autofirmado de 30 días. Son reversibles con <code>scripts/teardown_lab_env.sh</code>. Presentarlos como "servicios encontrados" habría sido falso.</p>
+      </div>
+
+      <h3>3.4 Herramientas y versiones</h3>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 4. Versiones registradas durante la ejecución (2026-10-06).</caption>
+          <thead><tr><th>Herramienta</th><th>Versión observada</th><th>Origen del dato</th></tr></thead>
+          <tbody>
+            <tr><td>Nmap</td><td><code>7.99</code> (<code>7.99+dfsg-1kali1</code>)</td><td><code>nmap --version</code>, <code>dpkg -l</code></td></tr>
+            <tr><td>Kali GNU/Linux</td><td><code>2026.3</code> rolling</td><td><code>/etc/os-release</code></td></tr>
+            <tr><td>Kernel</td><td><code>7.1.5+kali-amd64</code></td><td><code>uname -a</code></td></tr>
+            <tr><td>OpenSSH (servidor)</td><td><code>OpenSSH_10.4p1 Debian-4</code></td><td><code>ssh -V</code></td></tr>
+            <tr><td>vsftpd</td><td><code>3.0.5-0.5</code></td><td><code>dpkg -l</code></td></tr>
+            <tr><td>nginx (instalado, no activo)</td><td><code>1.30.0-2</code></td><td><code>dpkg -l</code></td></tr>
+            <tr><td>Python 3</td><td><code>3.13.14</code></td><td><code>python3 --version</code></td></tr>
+            <tr><td>curl</td><td><code>8.21.0</code></td><td><code>curl --version</code></td></tr>
+            <tr><td>OpenSSL</td><td><code>3.6.3</code></td><td><code>openssl version</code></td></tr>
+            <tr><td>VirtualBox</td><td>no registrado en este laboratorio</td><td>- <em>pendiente</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.5 Alcance autorizado y limitaciones</h3>
+      <div class="pending">
+        <span class="tag">Alcance autorizado</span>
+        <p><strong>Único objetivo</strong> <code>192.168.56.103</code> (la propia máquina Kali) y su interfaz de bucle <code>127.0.0.1</code>. La autorización fue concedida expresamente por la propietaria del laboratorio para este portafolio.</p>
+      </div>
+      <div class="warn">
+        <span class="tag">Fuera de alcance</span>
+        <ul>
+          <li><code>192.168.56.1</code> · anfitrión Windows. No se le envía ningún paquete.</li>
+          <li><code>10.0.2.2</code> · pasarela NAT. No se prueba.</li>
+          <li><code>192.168.56.0/24</code> y <code>10.0.2.0/24</code> · no se realiza barrido de subred.</li>
+          <li>Cualquier dirección pública o de terceros.</li>
+        </ul>
+        <p style="margin-top:.75rem">Acciones prohibidas, denegación de servicio, fuerza bruta, explotación, cambios en firewall o en la configuración de red que puedan interrumpir el acceso SSH.</p>
+      </div>
+      <p><strong>Una dirección privada no implica autorización.</strong> La lista anterior existe precisamente porque la pertenencia a una red privada es indiferente a la autorización. Sin permiso explícito, ninguna de estas direcciones es un objetivo legítimo.</p>
+    </section>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab01-alcance.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab01-alcance.png" alt="Pantalla con el alcance autorizado escrito en la terminal">
+        <figcaption><strong>Captura 1.</strong> Listado del objetivo único autorizado, del bucle de trabajo, de las direcciones que quedan fuera de alcance y de las acciones prohibidas, junto con las versiones de Nmap, Python, curl y OpenSSL del equipo.</figcaption>
+      </figure>
+
+<section id="s4">
+      <h2>4. Conocimientos previos</h2>
+      <ul>
+        <li><strong>Modelo de capas y TCP/IP.</strong> Para saber que un puerto abierto informa de un servicio que acepta conexiones, no de una vulnerabilidad.</li>
+        <li><strong>Linux desde la terminal.</strong> Usuario, grupos, <code>systemd</code>, <code>ip</code>, <code>ss</code>, <code>ps</code>, permisos y <code>sudo</code>.</li>
+        <li><strong>Redes.</strong> Direccionamiento IPv4, máscara /24, rutas, diferencias entre NAT, bridged y host-only.</li>
+        <li><strong>Qué son las capacidades de Linux</strong> (<code>cap_net_raw</code> y compañía). Sin este concepto, el comportamiento de <code>nmap -sS</code> en este entorno no se puede explicar (se detalla en el Laboratorio 03).</li>
+        <li><strong>VirtualBox.</strong> Máquinas virtuales, adaptadores de red y snapshot como mecanismo de reversibilidad.</li>
+      </ul>
+      <p>Los conocimientos se aplicaron <em>después</em> de leer la documentación oficial de cada herramienta. Las referencias están en la sección 14.</p>
+    </section>
+
+<section id="s5">
+      <h2>5. Procedimiento reproducible</h2>
+      <p>El laboratorio se ejecutó desde el host Windows con acceso SSH por clave a Kali. Los comandos viven en scripts versionados para que otra persona pueda repetirlos.</p>
+
+      <h4>Paso 1 · Acceso de gestión</h4>
+      <pre class="cmd"><code>ssh -i &lt;clave_privada&gt; mg@192.168.56.103</code></pre>
+      <p>El acceso usa una clave <code>ed25519</code> creada para este trabajo e instalada en <code>~/.ssh/authorized_keys</code> de Kali. <strong>Ninguna contraseña aparece en scripts, informes, capturas ni en el repositorio.</strong></p>
+
+      <h4>Paso 2 · Preparar el entorno (añade 8080 y 8443)</h4>
+      <pre class="cmd"><code>scp scripts/setup_lab_env.sh scripts/teardown_lab_env.sh mg@192.168.56.103:~/labenv/scripts/
+ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/setup_lab_env.sh' ~/evidencias/lab01/e01_setup_lab_env.typescript"</code></pre>
+
+      <h4>Paso 3 · Recoger el estado del entorno</h4>
+      <pre class="cmd"><code>scp scripts/lab01_entorno.sh mg@192.168.56.103:~/labenv/scripts/
+ssh -i &lt;clave&gt; mg@192.168.56.103 "script -q -e -c 'bash ~/labenv/scripts/lab01_entorno.sh' ~/evidencias/lab01/e01_entorno_y_alcance.typescript"</code></pre>
+
+      <h4>Paso 4 · Traer las evidencias al host</h4>
+      <pre class="cmd"><code>scp mg@192.168.56.103:~/evidencias/lab01/*.typescript evidencias/lab01/</code></pre>
+
+      <div class="note">
+        <span class="tag">Sobre <code>script</code></span>
+        <p><code>script -q -e -c</code> de util-linux graba la sesión real con su cabecera (<em>Script started on …</em>), su pie con el código de salida y la salida tal cual se produjo. Ese archivo es la evidencia primaria. Cualquier extracto mostrado en este informe sale de ahí, solo se eliminaron los códigos de color ANSI para que el texto sea legible.</p>
+      </div>
+    </section>
+
+<section id="s6">
+      <h2>6. Comandos exactos y explicación de sus opciones</h2>
+
+      <pre class="cmd"><span class="cmd-label">Hipervisor</span><code>VBoxManage showvminfo "Kali Linux" --machinereadable</code></pre>
+      <ul>
+        <li><code>--machinereadable</code>. Devuelve la configuración en pares <code>clave=valor</code> entre comillas, pensado para leer por programa. Evita interpretar texto humano.</li>
+        <li>Se extrajeron solo <code>nicN</code> y <code>macaddressN</code>. Son los campos que permiten cruzar modo de red con interfaz real.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Huésped</span><code>systemd-detect-virt
+ip -o link show
+ip -o -4 addr show
+ip route
+ip route get 192.168.56.103</code></pre>
+      <ul>
+        <li><code>systemd-detect-virt</code>. Informa el hipervisor detectado. Sale <code>oracle</code>. Sin argumentos no falla si no hay virtualización.</li>
+        <li><code>ip -o link show</code>. Formato de una línea por interfaz. Aquí se usa para leer la MAC y cruzarla con la del hipervisor.</li>
+        <li><code>ip -o -4 addr show</code>. Solo direcciones IPv4 en formato una-línea, más fácil de comparar con <code>grep</code>.</li>
+        <li><code>ip route get &lt;dir&gt;</code>. Resuelve qué ruta usaría el kernel para un destino concreto. Devuelve <code>dev lo</code> porque la dirección es propia.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Inventario de servicios</span><code>ss -tln
+ss -tlnp
+ps -eo pid,user,comm | grep -E 'sshd|vsftpd|python3|openssl'
+lsof -nP -iTCP -sTCP:LISTEN
+systemctl is-active ssh vsftpd</code></pre>
+      <ul>
+        <li><code>ss</code>. Sustituto moderno de <code>netstat</code>, lee directamente del subsistema de sockets.</li>
+        <li><code>-t</code> TCP, <code>-l</code> solo escuchando, <code>-n</code> sin resolver nombres (evita consultas DNS que enmascaran el dato), <code>-p</code> muestra el proceso · <strong>requiere privilegios</strong> para procesos de otros usuarios.</li>
+        <li><code>lsof -nP</code>. <code>-n</code> sin resolución de nombres, <code>-P</code> sin traducir puertos a servicios y <code>-iTCP -sTCP:LISTEN</code> acota a sockets TCP en escucha.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Conectividad, solo dentro del alcance</span><code>ping -c 3 -W 2 127.0.0.1
+ping -c 3 -W 2 192.168.56.103</code></pre>
+      <ul>
+        <li><code>-c 3</code>. Exactamente tres eco, detección de pérdida fiable sin insistir.</li>
+        <li><code>-W 2</code>. Espera máxima de 2 segundos por respuesta. Evita bloqueos largos si algo no responde.</li>
+      </ul>
+
+      <pre class="cmd"><span class="cmd-label">Versiones</span><code>nmap --version
+getcap -v /usr/lib/nmap/nmap
+dpkg -l nmap vsftpd openssh-server nginx</code></pre>
+      <ul>
+        <li><code>dpkg -l &lt;paquete&gt;</code>. Versión exacta instalada, no la que declara el binario. <code>getcap -v</code> muestra las capacidades de archivo, clave para entender el escaneo SYN sin root (Laboratorio 03).</li>
+      </ul>
+    </section>
+
+<section id="s7">
+      <h2>7. Resultados observados</h2>
+
+      <h3>7.1 Identidad y sistema</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab01/e01_entorno_y_alcance.typescript</span><span>sección [1.2] a [1.4]</span></div>
+        <pre><code>$ whoami
+mg
+$ hostname
+magdalena
+$ id
+uid=1001(mg) gid=1001(mg) groups=1001(mg),0(root),4(adm),...,7(sudo),...,103(scanner),...
+
+$ systemd-detect-virt
+oracle
+$ lsmod | grep -E "vboxguest|vboxsf"
+vboxsf                 49152  1
+vboxguest              57344  7 vboxsf</code></pre>
+        <figcaption><strong>Figura 2.</strong> Identidad del usuario, virtualización detectada y módulos de Guest Additions. Evidencia en <code>e01_entorno_y_alcance.typescript</code>, secciones [1.2] y [1.4].</figcaption>
+      </div>
+
+      <p>Usuario <code>mg</code> con <code>uid=1001</code>, perteneciente a los grupos <code>sudo</code> y <code>scanner</code> entre otros. Hostname <code>magdalena</code>. Sistema <strong>Kali GNU/Linux Rolling 2026.3</strong>, kernel <code>7.1.5+kali-amd64</code>. <code>systemd-detect-virt</code> devuelve <code>oracle</code> y el módulo <code>vboxguest</code> está cargado. El hipervisor es VirtualBox, confirmado desde dentro de la máquina.</p>
+
+      <h3>7.2 Interfaces y rutas</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab01/e01_entorno_y_alcance.typescript</span><span>sección [1.5] a [1.6]</span></div>
+        <pre><code>$ ip -o -4 addr show
+1: lo    inet 127.0.0.1/8 scope host lo
+2: eth0  inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic noprefixroute eth0
+4: eth2  inet 192.168.56.103/24 brd 192.168.56.255 scope global dynamic noprefixroute eth2
+
+$ ip route
+default via 10.0.2.2 dev eth0 proto dhcp src 10.0.2.15 metric 100
+10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 100
+192.168.56.0/24 dev eth2 proto kernel scope link src 192.168.56.103 metric 102
+
+$ ip route get 192.168.56.103
+local 192.168.56.103 dev lo src 192.168.56.103 uid 1001
+    cache &lt;local&gt;</code></pre>
+        <figcaption><strong>Figura 3.</strong> Direccionamiento, tabla de rutas y resolución de ruta hacia el objetivo autorizado. Evidencia en <code>e01_entorno_y_alcance.typescript</code>, secciones [1.5] y [1.6].</figcaption>
+      </div>
+
+      <p>eth1 está <code>UP</code> pero <strong>no tiene dirección IPv4</strong>, coherente con un adaptador <code>bridged</code> que no obtuvo configuración. eth0 y eth2 muestran <code>dynamic</code>. Ambas recibieron su dirección por DHCP.</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab01-interfaces.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab01-interfaces.png" alt="Pantalla con las interfaces de red y la tabla de rutas">
+        <figcaption><strong>Captura 2.</strong> Direcciones de las cuatro interfaces, máscaras y tablas de rutas, incluida la resolución de la ruta hacia el objetivo por el bucle de trabajo.</figcaption>
+      </figure>
+
+      <h3>7.3 Servicios escuchando</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab01/e01_entorno_y_alcance.typescript</span><span>sección [1.9]</span></div>
+        <pre><code>$ ss -tln
+State  Recv-Q Send-Q Local Address:Port Peer Address:Port
+LISTEN 0      5            0.0.0.0:8080      0.0.0.0:*
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*
+LISTEN 0      128             [::]:22           0.0.0.0:*
+LISTEN 0      32                 *:21              *:*
+LISTEN 0      4096               *:8443            *:*
+
+$ ps -eo pid,user,comm | grep -E "sshd|vsftpd|python3|openssl"
+    873 root     vsftpd
+    874 root     sshd
+  23848 mg       python3
+  23863 mg       openssl
+
+$ systemctl is-active ssh vsftpd
+active
+active</code></pre>
+        <figcaption><strong>Figura 4.</strong> Inventario de sockets TCP en escucha y procesos asociados. Evidencia en <code>e01_entorno_y_alcance.typescript</code>, sección [1.9].</figcaption>
+      </div>
+
+      <p><code>ss -tln</code> sin <code>-p</code> no muestra procesos porque eso exige privilegios. La correspondencia puerto→proceso se obtuvo combinando <code>ps</code>, <code>systemctl</code> y <code>lsof</code> (este último solo ve los procesos del propio usuario, listó <code>python3</code> en 8080 y <code>openssl</code> en 8443, pero no a <code>vsftpd</code> ni <code>sshd</code>).</p>
+
+      <figure class="captura">
+        <div class="evidence-head">
+          <span>evidencias/capturas/lab01-servicios.png</span>
+          <span>captura de la sesión gráfica</span>
+        </div>
+        <img src="../evidencias/capturas/lab01-servicios.png" alt="Pantalla con los servicios que escuchan en el equipo">
+        <figcaption><strong>Captura 3.</strong> Inventario de sockets en escucha, procesos asociados y estado de los servicios del sistema.</figcaption>
+      </figure>
+
+      <h3>7.4 Conectividad</h3>
+      <div class="evidence">
+        <div class="evidence-head"><span>evidencias/lab01/e01_entorno_y_alcance.typescript</span><span>sección [1.10]</span></div>
+        <pre><code>$ ping -c 3 -W 2 127.0.0.1
+3 packets transmitted, 3 received, 0% packet loss
+rtt min/avg/max/mdev = 0.067/0.594/1.644/0.742 ms
+
+$ ping -c 3 -W 2 192.168.56.103
+3 packets transmitted, 3 received, 0% packet loss
+rtt min/avg/max/mdev = 0.071/3.353/9.495/4.346 ms</code></pre>
+        <figcaption><strong>Figura 5.</strong> Comprobaciones de conectividad limitadas al alcance autorizado. Evidencia en <code>e01_entorno_y_alcance.typescript</code>, sección [1.10].</figcaption>
+      </div>
+      <p>Ambas direcciones responden con 0% de pérdida. El promedio más alto en <code>192.168.56.103</code> (3,35 ms frente a 0,59 ms) es ruido de programación en una máquina virtual con siete vCPUs, no una diferencia de camino, <code>ip route get</code> confirma que ambas rutas terminan en <code>lo</code>.</p>
+
+      <h3>7.5 Marcador de tiempo</h3>
+      <p>Toda la ejecución ocurrió el <strong>2026-10-06 entre 14:31:11 y 14:34:26 (UTC-04:00, <code>America/New_York</code>). <code>NTPSynchronized=no</code>, por lo que la hora del equipo no está sincronizada. Conviene no usarla como única marca temporal de una evidencia.</p>
+    </section>
+
+<section id="s8">
+      <h2>8. Evidencias vinculadas</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 5. Archivos de evidencia del Laboratorio 01.</caption>
+          <thead><tr><th>Archivo</th><th>Tipo</th><th>Contenido</th></tr></thead>
+          <tbody>
+            <tr><td><a href="../evidencias/lab01/e01_entorno_y_alcance.typescript">e01_entorno_y_alcance.typescript</a></td><td>Transcripción de terminal (util-linux <code>script</code>)</td><td>Sesión completa del Laboratorio 01, con cabecera, pie y código de salida <code>0</code></td></tr>
+            <tr><td><a href="../evidencias/lab01/e01_setup_lab_env.typescript">e01_setup_lab_env.typescript</a></td><td>Transcripción de terminal</td><td>Preparación del entorno, estado base, alta de 8080 y 8443, verificación con <code>curl</code></td></tr>
+            <tr><td><a href="../evidencias/lab01/hypervisor_vboxmanage.txt">hypervisor_vboxmanage.txt</a></td><td>Salida de comando en el host</td><td>Configuración de la VM, redes, DHCP, listado de VMs</td></tr>
+            <tr><td><a href="../scripts/lab01_entorno.sh">scripts/lab01_entorno.sh</a></td><td>Script de ejecución</td><td>Procedimiento reproducible del laboratorio</td></tr>
+            <tr><td><a href="../scripts/setup_lab_env.sh">scripts/setup_lab_env.sh</a></td><td>Script de entorno</td><td>Alta reversible de servicios de prueba</td></tr>
+            <tr><td><a href="../scripts/teardown_lab_env.sh">scripts/teardown_lab_env.sh</a></td><td>Script de reversión</td><td>Retiro de los servicios añadidos</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <span class="tag">Sobre las capturas</span>
+        <p>No hay capturas de escritorio, todo el acceso fue por SSH. Las figuras anteriores son <strong>extractos literales de la transcripción de terminal</strong> (se eliminaron solo los códigos de color ANSI). El archivo original se conserva íntegro y enlazado.</p>
+      </div>
+    </section>
+
+<section id="s9">
+      <h2>9. Interpretación técnica</h2>
+
+      <p><strong>Evidencia.</strong> El hipervisor declara <code>nic3="hostonly"</code> con MAC <code>080027244BCF</code>, y el huésped declara <code>eth2</code> con MAC <code>08:00:27:24:4b:cf</code> e <code>IP 192.168.56.103/24</code>. Las tres lecturas coinciden.</p>
+      <p><strong>Interpretación.</strong> eth2 es el adaptador host-only. La coincidencia de MAC es una identificación fuerte. El rango de direcciones por sí solo no lo habría sido, porque tanto la NAT de VirtualBox como una red corporativa podrían usar rangos parecidos.</p>
+
+      <p><strong>Evidencia.</strong> <code>ip route get 192.168.56.103</code> devuelve <code>dev lo</code> y <code>cache &lt;local&gt;</code>.</p>
+      <p><strong>Interpretación.</strong> El tráfico hacia la dirección propia del equipo no sale por eth2, el kernel lo resuelve localmente por el bucle de trabajo. Esto condiciona todo el portafolio. <strong>Los escaneos de este proyecto NO atraviesan el adaptador de red ni el conmutador virtual</strong>, no hay latencia de red real, no hay tablas ARP intermedias y los firewalls de terceros no participan. Los resultados son válidos para caracterizar servicios locales, pero <em>no</em> representan lo que vería un atacante externo ni permiten estudiar comportamiento de red. Este límite se declara en todos los laboratorios.</p>
+
+      <p><strong>Evidencia.</strong> <code>eth1</code> está <code>UP</code> pero sin IPv4. El hipervisor la declara <code>bridged</code>.</p>
+      <p><strong>Interpretación.</strong> El adaptador puenteado está encendido pero no obtuvo configuración (sin DHCP o sin enlace útil). Un analista no debería concluir que "la interfaz está caída". <code>state UP</code> y "sin dirección IPv4" son cosas distintas.</p>
+
+      <p><strong>Evidencia.</strong> <code>ss -tln</code> muestra cuatro puertos. <code>lsof</code> solo explica dos de ellos para el usuario actual.</p>
+      <p><strong>Interpretación.</strong> La visibilidad de procesos depende de privilegios. Un inventario de activos honesto separa lo observado (cuatro puertos en escucha) de lo identificado (proceso en dos de ellos sin elevar privilegios) y de lo inferido.</p>
+    </section>
+
+<section id="s10">
+      <h2>10. Implicación defensiva y recomendaciones</h2>
+      <ul>
+        <li><strong>Documentar el alcance antes de escanear</strong> convierte una actividad de riesgo en una actividad auditada. Si el límite está escrito, una desviación es visible al instante. Si no, la desviación se descubre tarde, si es que se descubre.</li>
+        <li><strong>Cruzar el inventario desde dos fuentes</strong> (hipervisor y huésped) detecta configuraciones que el administrador olvidó, aquí, un adaptador bridged encendido sin dirección que nadie había documentado.</li>
+        <li><strong>Un interfaz <code>UP</code> sin dirección IPv4</strong> merece revisión, suele indicar un adaptador configurado y abandonado. En un entorno real es superficie que alguien podría reactivar sin control.</li>
+        <li><strong>Registrar versiones exactas</strong> es lo que permite convertir un resultado en algo reproducible y, más adelante, correlacionarlo con avisos de CVE sin ambigüedad.</li>
+        <li><strong>Acceso por clave y no por contraseña</strong> para el canal de gestión, elimina el riesgo de que la credencial aparezca en un script o en la historia del chat, y permite revocar el acceso editando un archivo.</li>
+      </ul>
+      <div class="note">
+        <span class="tag">Evidencia, interpretación y recomendación</span>
+        <p>Un puerto en escucha <strong>no es</strong> una vulnerabilidad, y una interfaz sin dirección <strong>no es</strong> un fallo. Lo que este laboratorio aporta es la línea base contra la que se comparan los laboratorios siguientes.</p>
+      </div>
+    </section>
+
+<section id="s11">
+      <h2>11. Errores, limitaciones y puntos pendientes</h2>
+      <div class="table-scroll">
+        <table>
+          <caption>Tabla 6. Limitaciones reconocidas del Laboratorio 01.</caption>
+          <thead><tr><th>#</th><th>Limitación</th><th>Impacto</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>L1</td>
+              <td>El escaneo hacia <code>192.168.56.103</code> se resuelve por <code>lo</code>, no por eth2</td>
+              <td>Sin latencia de red ni elementos intermedios. Los resultados no representan un escenario remoto</td>
+              <td>Declarado en todos los laboratorios</td>
+            </tr>
+            <tr>
+              <td>L2</td>
+              <td><code>sshd -T</code> (configuración efectiva) no es legible sin privilegios y <code>sudo</code> exige contraseña</td>
+              <td>La configuración de SSH solo se conoce por el archivo de configuración y por el comportamiento observado</td>
+              <td><strong>Pendiente</strong>. Validar en consola con <code>sudo sshd -T</code></td>
+            </tr>
+            <tr>
+              <td>L3</td>
+              <td>Sin NTP (<code>NTPSynchronized=no</code>) y sin <code>/etc/timezone</code></td>
+              <td>La marca temporal depende del reloj de la VM</td>
+              <td>Anotado. Usar la fecha de la evidencia, no la del sistema</td>
+            </tr>
+            <tr>
+              <td>L4</td>
+              <td>Versión de VirtualBox no registrada</td>
+              <td>Imprecisión menor en la ficha de entorno</td>
+              <td><strong>Pendiente</strong>. <code>VBoxManage --version</code></td>
+            </tr>
+            <tr>
+              <td>L5</td>
+              <td>Dos servicios (8080, 8443) son creación del propio proyecto</td>
+              <td>No pueden presentarse como hallazgos de reconocimiento</td>
+              <td>Marcados como tales en la Tabla 3</td>
+            </tr>
+            <tr>
+              <td>L6</td>
+              <td>No se realizó barrido de subred ni pruebas contra el anfitrión</td>
+              <td>No hay datos de descubrimiento de red externa</td>
+              <td>Decisión de alcance, no un fallo</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Los errores cometidos durante la preparación también quedaron registrados, varias invocaciones fallaron por interpretación de comandos en la capa de PowerShell del anfitrión (escapado de comillas y <code>$</code>). La solución fue mover la lógica a scripts <code>.sh</code> versionados y transferirlos con <code>scp</code>, que además hizo el procedimiento reproducible. <strong>Ninguna de esas fallas afectó a los resultados reportados</strong>, porque cada paso se volvió a ejecutar y a grabar después de corregirlo.</p>
+    </section>
+
+<section id="s12">
+      <h2>12. Conclusión</h2>
+      <p>El laboratorio termina con una línea base verificable, una máquina Kali 2026.3 en VirtualBox con tres adaptadores cuyo modo se leyó del hipervisor y se cruzó por MAC, cuatro servicios TCP en escucha (21, 22, 8080 y 8443), herramientas con versión registrada y un alcance reducido a <code>192.168.56.103</code> con la dirección del anfitrión expresamente excluida.</p>
+      <p>El resultado técnico que más condiciona el resto del portafolio es que <code>ip route get 192.168.56.103</code> devuelve <code>dev lo</code>. Todos los escaneos siguientes son locales. Ese dato se declara en cada informe para que nadie lea los resultados como si procedieran de un escaneo remoto.</p>
+      <p>Quedan dos puntos sin cerrar y así se dejan, la configuración efectiva de <code>sshd</code> (L2) y la versión de VirtualBox (L4). Ninguno afecta a las conclusiones de este laboratorio.</p>
+    </section>
+
+<section id="s13">
+      <h2>13. Preguntas de entrevista sobre esta práctica</h2>
+      <ol>
+        <li><strong>¿Cómo comprobaste que eth2 era el adaptador host-only?</strong> Leyendo <code>VBoxManage showvminfo</code> y cruzando la MAC <code>080027244BCF</code> con <code>ip -o link show</code>. El rango de direcciones no sirve como prueba.</li>
+        <li><strong>¿Por qué no escaneaste toda la subred <code>192.168.56.0/24</code>?</strong> Porque la autorización era para una dirección. Que sea red privada no implica permiso.</li>
+        <li><strong>¿Qué significa que <code>ip route get 192.168.56.103</code> devuelva <code>dev lo</code>?</strong> Que el paquete nunca toca la tarjeta de red, el escaneo es local. Consecuencia, latencia artificialmente baja y ausencia de cualquier elemento intermedio.</li>
+        <li><strong>¿Por qué <code>ss -tln</code> no muestra el proceso en el puerto 21?</strong> Porque <code>-p</code> necesita privilegios sobre procesos ajenos. Se resolvió cruzando con <code>ps</code> y <code>systemctl</code>.</li>
+        <li><strong>eth1 está <code>UP</code> pero sin IP, ¿está rota?</strong> No. <code>UP</code> indica estado de enlace, no configuración IP. Coincide con un adaptador <code>bridged</code> sin DHCP.</li>
+        <li><strong>¿Cómo revertiste los servicios que añadiste?</strong> Con <code>teardown_lab_env.sh</code>, que mata únicamente los procesos lanzados por este proyecto y verifica que 21 y 22 siguen activos.</li>
+        <li><strong>¿Por qué guardas las evidencias con <code>script</code> y no con una captura?</strong> Porque todo el acceso fue SSH. <code>script</code> conserva salida literal, cabecera, pie y código de salida, y es verificable por terceros.</li>
+      </ol>
+    </section>
+
+<section id="s14">
+      <h2>14. Referencias oficiales utilizadas</h2>
+      <ul>
+        <li>Nmap Reference Guide, escaneos y opciones. <a href="https://nmap.org/book/man.html">nmap.org/book/man.html</a></li>
+        <li><code>iproute2</code>, página de manual de <code>ip(8)</code>. <a href="https://man7.org/linux/man-pages/man8/ip.8.html">man7.org/linux/man-pages/man8/ip.8.html</a></li>
+        <li><code>ss</code>, página de manual. <a href="https://man7.org/linux/man-pages/man8/ss.8.html">man7.org/linux/man-pages/man8/ss.8.html</a></li>
+        <li>util-linux, utilidad <code>script(1)</code>. <a href="https://man7.org/linux/man-pages/man1/script.1.html">man7.org/linux/man-pages/man1/script.1.html</a></li>
+        <li>Manual de VirtualBox, redes. <a href="https://www.virtualbox.org/manual/ch06.html">virtualbox.org/manual/ch06.html</a></li>
+        <li>7 capabilities(7) para capacidades de Linux. <a href="https://man7.org/linux/man-pages/man7/capabilities.7.html">man7.org/linux/man-pages/man7/capabilities.7.html</a></li>
+        <li>Kali Linux, documentación. <a href="https://www.kali.org/docs/">kali.org/docs</a></li>
+        <li>OpenSSH, página del proyecto. <a href="https://www.openssh.com/">openssh.com</a></li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Enlaces del pie">
+      <a href="../index.html">Inicio</a>
+      <a href="../index.html#laboratorios">Laboratorios</a>
+      <a href="../pdf/informe-general.pdf">Informe general (PDF)</a>
+      <a href="../pdf/ficha-proyecto.pdf">Ficha del proyecto (PDF)</a>
+    </nav>
+    <p>Portafolio académico de laboratorios de ciberseguridad. Los resultados corresponden a ejecuciones reales sobre una máquina virtual propia. Los pendientes están marcados como tales.</p>
+    <p><a href="mailto:magdalenagonzalezcorreo@gmail.com">magdalenagonzalezcorreo@gmail.com</a> · <a href="https://www.linkedin.com/in/magdalenagonzalezpanama/?locale=es">LinkedIn de Magdalena Sarit González Bustillo</a></p>
+  </div>
+</footer>
+
+<script src="../js/main.js" defer></script>
+</body>
+</html>

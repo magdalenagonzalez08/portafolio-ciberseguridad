@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 15:35:11 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sS -p 8080 -&#45;reason -oA /home/mg/evidencias/lab06/despues_syn 192.168.56.103 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sS -p 8080 -&#45;reason -oA /home/mg/evidencias/lab06/despues_syn 192.168.56.103" start="1791315311" startstr="Tue Oct  6 15:35:11 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="1" services="8080"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1791315316" endtime="1791315318"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.56.103" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="8080"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="http-proxy" method="table" conf="3"/></port>
+</ports>
+</host>
+<runstats><finished time="1791315318" timestr="Tue Oct  6 15:35:18 2026" summary="Nmap done at Tue Oct  6 15:35:18 2026; 1 IP address (1 host up) scanned in 6.65 seconds" elapsed="6.65" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

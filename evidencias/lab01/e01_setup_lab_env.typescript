@@ -1,0 +1,41 @@
+Script started on 2026-10-06 14:31:11-04:00 [COMMAND="bash ~/labenv/scripts/setup_lab_env.sh" <not executed on terminal>]
+==================================================================
+ CONFIGURACION DE ENTORNO DE LABORATORIO
+ Fecha local: 2026-10-06T14:31:11-04:00  (zona: desconocida)
+ Usuario: mg  Host: magdalena
+==================================================================
+
+### [E0] Estado BASE (servicios que ya existian: 21/ftp y 22/ssh)
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*   
+LISTEN 0      128             [::]:22           [::]:*   
+LISTEN 0      32                 *:21              *:*   
+
+### [E1] Servicio HTTP de prueba en 0.0.0.0:8080 (python3 http.server)
+$ nohup setsid python3 -m http.server 8080 --bind 0.0.0.0 > http.log 2>&1 &
+LISTEN 0      5            0.0.0.0:8080      0.0.0.0:*
+  [OK] 8080 escuchando
+
+### [E2] Servicio HTTPS de prueba en 0.0.0.0:8443 (openssl s_server, certificado autofirmado)
+$ openssl req -x509 -newkey rsa:2048 -nodes -keyout lab.key -out lab.crt -days 30 -subj ...
+LISTEN 0      4096               *:8443            *:*
+  [OK] 8443 escuchando
+
+### [E3] Estado FINAL de escucha en todas las interfaces
+State  Recv-Q Send-Q Local Address:Port Peer Address:Port
+LISTEN 0      5            0.0.0.0:8080      0.0.0.0:*
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*
+LISTEN 0      128             [::]:22           [::]:*
+LISTEN 0      32                 *:21              *:*
+LISTEN 0      4096               *:8443            *:*
+
+### [E4] Verificacion: los servicios nuevos responden por la IP del objetivo autorizado
+$ curl -s -o /dev/null -w "HTTP %{http_code}\n" http://192.168.56.103:8080/
+HTTP 8080 -> 200
+$ curl -sk -o /dev/null -w "HTTP %{http_code}\n" https://192.168.56.103:8443/
+HTTP 8443 -> 200
+
+### [E5] Comprobacion de reversibilidad (documentada, ejecutar al terminar)
+Para retirar el entorno: bash teardown_lab_env.sh
+
+Script done on 2026-10-06 14:31:14-04:00 [COMMAND_EXIT_CODE="0"]

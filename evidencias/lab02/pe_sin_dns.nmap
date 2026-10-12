@@ -1,0 +1,4 @@
+# Nmap 7.99 scan initiated Tue Oct  6 15:41:15 2026 as: /usr/lib/nmap/nmap --privileged -sn -n -PE -oA /home/mg/evidencias/lab02/pe_sin_dns 192.168.56.103
+Nmap scan report for 192.168.56.103
+Host is up.
+# Nmap done at Tue Oct  6 15:41:15 2026 -- 1 IP address (1 host up) scanned in 0.01 seconds

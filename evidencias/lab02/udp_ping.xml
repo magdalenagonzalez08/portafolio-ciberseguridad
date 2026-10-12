@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 14:48:39 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sn -PU53,161,123 -oA /home/mg/evidencias/lab02/udp_ping 192.168.56.103 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sn -PU53,161,123 -oA /home/mg/evidencias/lab02/udp_ping 192.168.56.103" start="1791312519" startstr="Tue Oct  6 14:48:39 2026" version="7.99" xmloutputversion="1.05">
+<verbose level="0"/>
+<debugging level="0"/>
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.56.103" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</host>
+<runstats><finished time="1791312520" timestr="Tue Oct  6 14:48:40 2026" summary="Nmap done at Tue Oct  6 14:48:40 2026; 1 IP address (1 host up) scanned in 1.01 seconds" elapsed="1.01" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

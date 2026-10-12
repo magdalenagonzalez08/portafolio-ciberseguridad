@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.99 scan initiated Tue Oct  6 15:01:48 2026 as: /usr/lib/nmap/nmap -&#45;privileged -sS -p 1-200 -&#45;reason -oX /home/mg/evidencias/lab03/cmp_syn_loop.xml 127.0.0.1 -->
+<nmaprun scanner="nmap" args="/usr/lib/nmap/nmap -&#45;privileged -sS -p 1-200 -&#45;reason -oX /home/mg/evidencias/lab03/cmp_syn_loop.xml 127.0.0.1" start="1791313308" startstr="Tue Oct  6 15:01:48 2026" version="7.99" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="200" services="1-200"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1791313308" endtime="1791313308"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="127.0.0.1" addrtype="ipv4"/>
+<hostnames>
+<hostname name="localhost" type="PTR"/>
+</hostnames>
+<ports><extraports state="closed" count="198">
+<extrareasons reason="reset" count="198" proto="tcp" ports="1-20,23-200"/>
+</extraports>
+<port protocol="tcp" portid="21"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ftp" method="table" conf="3"/></port>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ssh" method="table" conf="3"/></port>
+</ports>
+<times srtt="7" rttvar="0" to="100000"/>
+</host>
+<runstats><finished time="1791313308" timestr="Tue Oct  6 15:01:48 2026" summary="Nmap done at Tue Oct  6 15:01:48 2026; 1 IP address (1 host up) scanned in 0.16 seconds" elapsed="0.16" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

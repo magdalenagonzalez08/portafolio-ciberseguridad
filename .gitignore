@@ -1,0 +1,28 @@
+# Credenciales y material privado
+privado/
+*.pem
+*.key
+id_*
+*.ppk
+
+# Claves SSH
+.ssh/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Logs de sesión que puedan contener historial sensible
+*.log

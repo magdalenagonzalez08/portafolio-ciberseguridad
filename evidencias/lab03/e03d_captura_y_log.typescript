@@ -1,0 +1,56 @@
+Script started on 2026-10-06 15:09:24-04:00 [COMMAND="bash ~/labenv/scripts/lab03d_captura_y_log.sh" <not executed on terminal>]
+==================================================================
+ LABORATORIO 03 (d)   2026-10-06T15:09:24-04:00
+==================================================================
+
+--- [A] ¿Puede capturar paquetes sin root? ---------------------------
+$ command -v tcpdump
+/usr/bin/tcpdump
+$ getcap -v /usr/bin/tcpdump
+/usr/bin/tcpdump
+$ ls -l $(command -v tcpdump)
+-rwxr-xr-x 1 root root 1273880 Feb 27  2026 /usr/bin/tcpdump
+
+--- [B] Captura en loopback durante -sS hacia 192.168.56.103 --------
+$ nmap -sS -p 1-60 --max-retries 1 -oN /dev/null 192.168.56.103
+Not shown: 58 filtered tcp ports (no-response)
+Nmap done: 1 IP address (1 host up) scanned in 6.16 seconds
+Paquetes capturados hacia/desde 192.168.56.103 en lo:
+  total de paquetes: 0
+
+--- [Misma captura sobre 127.0.0.1 como referencia] ----------------
+$ nmap -sS -p 1-60 --max-retries 1 -oN /dev/null 127.0.0.1
+Not shown: 58 closed tcp ports (reset)
+Nmap done: 1 IP address (1 host up) scanned in 0.10 seconds
+Paquetes capturados hacia/desde 127.0.0.1 en lo:
+  total de paquetes: 0
+
+Resumen captura:  192.168.56.103 -> 0 paquetes    127.0.0.1 -> 0 paquetes
+
+--- [C] Registro de sshd con tres metodos, misma ventana ------------
+$ nmap -sT -p 22 --max-retries 1 -oN /dev/null 192.168.56.103
+Nmap done: 1 IP address (1 host up) scanned in 4.63 seconds
+Eventos desde la marca (nmap -sT):
+  eventos de sshd: 0
+$ nc -z -w 2 192.168.56.103 22
+  nc ok
+Eventos desde la marca (nc):
+Oct 06 15:09:43.922929 magdalena sshd-session[43849]: Connection closed by 192.168.56.103 port 33432 [preauth]
+  eventos de sshd: 1
+$ timeout 3 bash -c 'exec 3<>/dev/tcp/192.168.56.103/22; sleep 1'
+  conexion mantenida 1 s
+Eventos desde la marca (conexion mantenida):
+Oct 06 15:09:48.992177 magdalena sshd-session[43893]: error: kex_exchange_identification: read: Connection reset by peer [preauth]
+Oct 06 15:09:48.992263 magdalena sshd-session[43893]: Connection reset by 192.168.56.103 port 33436 [preauth]
+  eventos de sshd: 2
+
+Resumen de eventos de sshd:
+  nmap -sT ................. 0
+  nc -z .................... 1
+  bash abierta 1 segundo ... 2
+
+==================================================================
+ FIN 2026-10-06T15:09:53-04:00
+==================================================================
+
+Script done on 2026-10-06 15:09:53-04:00 [COMMAND_EXIT_CODE="0"]
